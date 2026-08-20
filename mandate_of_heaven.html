@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天命·国策  — 大明王朝</title>
+<style>
+/* ========== RESET & BASE ========== */
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e1a;color:#c8c8d0;font-family:'Microsoft YaHei','SimHei',sans-serif;overflow:hidden;height:100vh;user-select:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#0d1225}
+::-webkit-scrollbar-thumb{background:#2a3560;border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:#3a4a80}
+
+/* ========== COLOR THEME ========== */
+:root{
+  --bg-deep:#0a0e1a;
+  --bg-panel:#0d1225;
+  --bg-card:#111830;
+  --bg-hover:#1a2340;
+  --border:#1e2a4a;
+  --border-light:#2a3a5a;
+  --gold:#c9a84c;
+  --gold-light:#e8d080;
+  --gold-dim:#8a7030;
+  --text:#c8c8d0;
+  --text-dim:#6a7a8a;
+  --text-bright:#e8e8f0;
+  --accent-blue:#3a6ac8;
+  --accent-red:#c83a3a;
+  --accent-green:#3ac86a;
+  --accent-purple:#7a3ac8;
+  --accent-cyan:#3ac8c8;
+  --war:#d44a4a;
+  --peace:#4a8ad4;
+  --wealth:#c9a84c;
+  --food:#6aaa3a;
+}
+
+/* ========== LAYOUT ========== */
+#app{display:flex;flex-direction:column;height:100vh}
+#top-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:linear-gradient(180deg,#111830,#0d1225);border-bottom:1px solid var(--border);height:48px;flex-shrink:0}
+#top-bar .title{font-size:16px;color:var(--gold);font-weight:bold;letter-spacing:4px}
+#top-bar .info{display:flex;gap:20px;font-size:12px}
+#top-bar .info .item{display:flex;align-items:center;gap:4px}
+#top-bar .info .label{color:var(--text-dim)}
+#top-bar .info .val{color:var(--gold);font-weight:bold}
+#top-bar .info .val.danger{color:var(--accent-red)}
+#top-bar .info .val.good{color:var(--accent-green)}
+#top-bar .actions{display:flex;gap:6px}
+#top-bar .actions button{padding:4px 12px;font-size:12px;border:1px solid var(--border-light);background:var(--bg-card);color:var(--text);cursor:pointer;border-radius:3px}
+#top-bar .actions button:hover{background:var(--bg-hover);border-color:var(--gold)}
+#top-bar .actions button.primary{background:var(--gold);color:var(--bg-deep);border-color:var(--gold);font-weight:bold}
+
+#main{display:flex;flex:1;overflow:hidden}
+#sidebar{width:200px;flex-shrink:0;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+#sidebar .nav-item{padding:10px 16px;font-size:13px;cursor:pointer;border-left:3px solid transparent;display:flex;align-items:center;gap:8px;color:var(--text-dim);transition:all 0.15s}
+#sidebar .nav-item:hover{background:var(--bg-hover);color:var(--text)}
+#sidebar .nav-item.active{color:var(--gold);border-left-color:var(--gold);background:linear-gradient(90deg,rgba(201,168,76,0.08),transparent)}
+#sidebar .nav-item .icon{width:18px;text-align:center;font-size:14px}
+#sidebar .nav-item .badge{background:var(--accent-red);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:auto}
+
+#content{flex:1;overflow-y:auto;padding:16px;background:var(--bg-deep)}
+.panel{display:none}
+.panel.active{display:block}
+
+/* ========== CARDS & TABLES ========== */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:12px;margin-bottom:12px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);color:var(--gold);font-size:14px;font-weight:bold}
+.card-header .sub{color:var(--text-dim);font-size:11px;font-weight:normal}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:6px 8px;color:var(--text-dim);font-weight:normal;border-bottom:1px solid var(--border);font-size:11px}
+td{padding:5px 8px;border-bottom:1px solid rgba(30,42,74,0.5)}
+tr:hover td{background:var(--bg-hover)}
+tr.clickable{cursor:pointer}
+.text-gold{color:var(--gold)}
+.text-red{color:var(--accent-red)}
+.text-green{color:var(--accent-green)}
+.text-blue{color:var(--accent-blue)}
+.text-dim{color:var(--text-dim)}
+.text-bright{color:var(--text-bright)}
+
+/* ========== BUTTONS ========== */
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;font-size:12px;border:1px solid var(--border-light);background:var(--bg-card);color:var(--text);cursor:pointer;border-radius:3px;transition:all 0.15s}
+.btn:hover{background:var(--bg-hover);border-color:var(--gold)}
+.btn-gold{background:var(--gold);color:var(--bg-deep);border-color:var(--gold);font-weight:bold}
+.btn-gold:hover{background:var(--gold-light)}
+.btn-red{background:var(--accent-red);color:#fff;border-color:var(--accent-red)}
+.btn-red:hover{background:#d44a4a}
+.btn-green{background:var(--accent-green);color:#fff;border-color:var(--accent-green)}
+.btn-sm{padding:3px 8px;font-size:11px}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ========== MODAL ========== */
+#modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center}
+#modal-overlay.show{display:flex}
+#modal-box{background:var(--bg-panel);border:1px solid var(--gold);border-radius:6px;max-width:700px;width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,0.5)}
+#modal-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);color:var(--gold);font-size:15px;font-weight:bold}
+#modal-header .close{background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer}
+#modal-header .close:hover{color:var(--text)}
+#modal-body{padding:16px;overflow-y:auto;font-size:13px;line-height:1.6}
+#modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ========== LOG ========== */
+#log-panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:8px;max-height:200px;overflow-y:auto;font-size:11px;line-height:1.5}
+#log-panel .log-entry{padding:2px 4px;border-bottom:1px solid rgba(30,42,74,0.3)}
+#log-panel .log-entry:last-child{border-bottom:none}
+#log-panel .log-good{color:var(--accent-green)}
+#log-panel .log-bad{color:var(--accent-red)}
+#log-panel .log-info{color:var(--text-dim)}
+#log-panel .log-event{color:var(--gold)}
+#log-panel .log-war{color:var(--war)}
+
+/* ========== PROGRESS BAR ========== */
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin:4px 0}
+.progress-bar .fill{height:100%;border-radius:2px;transition:width 0.3s}
+.progress-bar .fill.good{background:var(--accent-green)}
+.progress-bar .fill.warn{background:var(--gold)}
+.progress-bar .fill.danger{background:var(--accent-red)}
+.progress-bar .fill.blue{background:var(--accent-blue)}
+
+/* ========== TOOLTIP ========== */
+.tooltip{cursor:help;border-bottom:1px dotted var(--text-dim);position:relative}
+
+/* ========== SPECIAL ========== */
+.section-title{font-size:14px;color:var(--gold);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.flex{display:flex;gap:8px;align-items:center}
+.flex-wrap{flex-wrap:wrap}
+.flex-1{flex:1}
+.gap-4{gap:4px}
+.mt-8{margin-top:8px}
+.mb-8{margin-bottom:8px}
+.text-center{text-align:center}
+.text-right{text-align:right}
+
+/* ========== FLOATING NOTIFICATION ========== */
+#notification{position:fixed;top:60px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.notif{background:var(--bg-panel);border:1px solid var(--border);border-left:3px solid var(--gold);padding:8px 14px;font-size:12px;border-radius:3px;animation:notif-in 0.3s ease,notif-out 0.3s ease 2.7s forwards;max-width:320px;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.notif.good{border-left-color:var(--accent-green)}
+.notif.bad{border-left-color:var(--accent-red)}
+.notif.war{border-left-color:var(--war)}
+@keyframes notif-in{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes notif-out{from{opacity:1}to{opacity:0;transform:translateX(40px)}}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:900px){
+  #sidebar{width:160px}
+  #sidebar .nav-item{font-size:12px;padding:8px 12px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="top-bar">
+    <div class="title">天命 · 国策</div>
+    <div class="info" id="top-info"></div>
+    <div class="actions">
+      <button onclick="saveGame()">存档</button>
+      <button onclick="loadGame()">读档</button>
+      <button onclick="exportSave()">导出</button>
+      <button class="primary" onclick="annualReview()">📜 上朝进奏</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <div class="nav-item active" data-panel="overview" onclick="switchPanel('overview')"><span class="icon">🏛</span>朝政总览</div>
+      <div class="nav-item" data-panel="provinces" onclick="switchPanel('provinces')"><span class="icon">🗺</span>两京十三省</div>
+      <div class="nav-item" data-panel="officials" onclick="switchPanel('officials')"><span class="icon">👤</span>官职体系</div>
+      <div class="nav-item" data-panel="military" onclick="switchPanel('military')"><span class="icon">⚔</span>军务</div>
+      <div class="nav-item" data-panel="economy" onclick="switchPanel('economy')"><span class="icon">💰</span>经济</div>
+      <div class="nav-item" data-panel="diplomacy" onclick="switchPanel('diplomacy')"><span class="icon">🏳</span>外交</div>
+      <div class="nav-item" data-panel="schools" onclick="switchPanel('schools')"><span class="icon">📖</span>学派</div>
+      <div class="nav-item" data-panel="exam" onclick="switchPanel('exam')"><span class="icon">🎓</span>科举</div>
+      <div class="nav-item" data-panel="events" onclick="switchPanel('events')"><span class="icon">🔥</span>事件<span class="badge" id="event-badge" style="display:none">0</span></div>
+      <div class="nav-item" data-panel="wonders" onclick="switchPanel('wonders')"><span class="icon">🏗</span>奇观</div>
+      <div class="nav-item" data-panel="log" onclick="switchPanel('log')"><span class="icon">📜</span>起居注</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content">
+      <div id="panel-overview" class="panel active"></div>
+      <div id="panel-provinces" class="panel"></div>
+      <div id="panel-officials" class="panel"></div>
+      <div id="panel-military" class="panel"></div>
+      <div id="panel-economy" class="panel"></div>
+      <div id="panel-diplomacy" class="panel"></div>
+      <div id="panel-schools" class="panel"></div>
+      <div id="panel-exam" class="panel"></div>
+      <div id="panel-events" class="panel"></div>
+      <div id="panel-wonders" class="panel"></div>
+      <div id="panel-log" class="panel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-header"><span id="modal-title">标题</span><button class="close" onclick="closeModal()">&times;</button></div>
+    <div id="modal-body"></div>
+    <div id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notification"></div>
+
+<script>
+// ===================================================================
+// 天命·国策  —  完整游戏核心
+// ===================================================================
+
+// ============================
+// 1.  DATA: 基础数据定义
+// ============================
+
+const PROVINCES_DATA = [
+  {id:'zhili',name:'北直隶',type:'京畿',pop:120,popBase:120,farm:3,market:2,garrison:50000,special:'京师所在',border:false,coast:true,desc:'天子脚下，畿辅重地'},
+  {id:'nanjili',name:'南直隶',type:'京畿',pop:150,popBase:150,farm:4,market:4,garrison:30000,special:'财赋重地',border:false,coast:true,desc:'江南财赋，半出此地'},
+  {id:'shandong',name:'山东',type:'腹里',pop:90,popBase:90,farm:3,market:2,garrison:20000,special:'孔孟故里',border:false,coast:true,desc:'齐鲁大地，礼仪之邦'},
+  {id:'shanxi',name:'山西',type:'腹里',pop:70,popBase:70,farm:2,market:2,garrison:25000,special:'表里山河',border:true,coast:false,desc:'晋商故里，边防重镇'},
+  {id:'henan',name:'河南',type:'腹里',pop:100,popBase:100,farm:4,market:2,garrison:15000,special:'中原腹地',border:false,coast:false,desc:'天下之中，粮仓所在'},
+  {id:'shaanxi',name:'陕西',type:'边镇',pop:50,popBase:50,farm:2,market:1,garrison:35000,special:'秦川沃野',border:true,coast:false,desc:'三秦故地，九边重镇'},
+  {id:'sichuan',name:'四川',type:'腹里',pop:80,popBase:80,farm:3,market:2,garrison:20000,special:'天府之国',border:false,coast:false,desc:'天府之国，蜀道天险'},
+  {id:'huguang',name:'湖广',type:'腹里',pop:110,popBase:110,farm:4,market:2,garrison:15000,special:'湖广熟天下足',border:false,coast:false,desc:'两湖粮仓'},
+  {id:'zhejiang',name:'浙江',type:'腹里',pop:95,popBase:95,farm:3,market:4,garrison:15000,special:'丝茶瓷海',border:false,coast:true,desc:'东南形胜，海贸枢纽'},
+  {id:'jiangxi',name:'江西',type:'腹里',pop:85,popBase:85,farm:3,market:2,garrison:12000,special:'文章节义',border:false,coast:false,desc:'物华天宝，人杰地灵'},
+  {id:'fujian',name:'福建',type:'沿海',pop:55,popBase:55,farm:2,market:3,garrison:10000,special:'海上丝路',border:false,coast:true,desc:'闽海雄风，商贾云集'},
+  {id:'guangdong',name:'广东',type:'沿海',pop:70,popBase:70,farm:2,market:3,garrison:15000,special:'岭南都会',border:false,coast:true,desc:'南粤之地，市舶要冲'},
+  {id:'guangxi',name:'广西',type:'边疆',pop:40,popBase:40,farm:1,market:1,garrison:20000,special:'桂管边疆',border:true,coast:true,desc:'桂岭瘴烟，土司交错'},
+  {id:'yunnan',name:'云南',type:'边疆',pop:45,popBase:45,farm:1,market:1,garrison:25000,special:'彩云之南',border:true,coast:false,desc:'滇池洱海，土司林立'},
+  {id:'guizhou',name:'贵州',type:'边疆',pop:25,popBase:25,farm:1,market:1,garrison:15000,special:'黔中苗疆',border:true,coast:false,desc:'地无三里平，苗疆要地'},
+  {id:'liaodong',name:'辽东',type:'九边',pop:35,popBase:35,farm:1,market:1,garrison:40000,special:'辽东边镇',border:true,coast:true,desc:'东北门户，胡骑出没'},
+  {id:'gansu',name:'甘肃',type:'九边',pop:25,popBase:25,farm:1,market:1,garrison:35000,special:'河西走廊',border:true,coast:false,desc:'西北锁钥，丝路要道'},
+  {id:'ningxia',name:'宁夏',type:'九边',pop:20,popBase:20,farm:1,market:1,garrison:30000,special:'塞上江南',border:true,coast:false,desc:'河套之地，屯田重镇'}
+];
+
+const OFFICE_POSITIONS = [
+  {id:'grand_secretary',name:'首辅',dept:'内阁',effect:'所有修正额外+5%',effectFn:g=>1.05,slot:1},
+  {id:'minister_li',name:'吏部尚书',dept:'吏部',effect:'官员能力+10%，科举录取率+5%',effectFn:g=>1.10,slot:1},
+  {id:'minister_hu',name:'户部尚书',dept:'户部',effect:'税收效率+15%，赈灾成本-20%',effectFn:g=>1.15,slot:1},
+  {id:'minister_bing',name:'兵部尚书',dept:'兵部',effect:'募兵成本-10%，边军士气+5',effectFn:g=>0.90,slot:1},
+  {id:'minister_li2',name:'礼部尚书',dept:'礼部',effect:'天命恢复+2/年，学派转换成本-10%',effectFn:g=>1.02,slot:1},
+  {id:'minister_xing',name:'刑部尚书',dept:'刑部',effect:'弹劾成功率+15%，稳定度衰减-10%',effectFn:g=>1.15,slot:1},
+  {id:'minister_gong',name:'工部尚书',dept:'工部',effect:'建筑成本-15%，漕运效率+10%',effectFn:g=>0.85,slot:1},
+  {id:'censor_left',name:'左都御史',dept:'都察院',effect:'弹劾案件发现率+20%',effectFn:g=>1.20,slot:1}
+];
+
+const SCHOOLS_DATA = [
+  {id:'rujia',name:'儒家',desc:'仁政礼治',effect:'稳定+10%，税收-5%，天命恢复+2',stability:0.1,tax:-0.05,morale:0,tianming:2,food:0,admin:0,army:0,build:0,eventReduce:0,diplomacy:0,popGrowth:0},
+  {id:'fajia',name:'法家',desc:'以法治国',effect:'行政+15%，弹劾成功率+10%，稳定-5%',stability:-0.05,tax:0,morale:0,tianming:0,food:0,admin:0.15,army:0,build:0,eventReduce:0,diplomacy:0,popGrowth:0},
+  {id:'bingjia',name:'兵家',desc:'富国强兵',effect:'募兵成本-15%，军队士气+10，文官效率-5%',stability:0,tax:0,morale:10,tianming:0,food:0,admin:-0.05,army:-0.15,build:0,eventReduce:0,diplomacy:0,popGrowth:0},
+  {id:'nongjia',name:'农家',desc:'以农为本',effect:'粮产+20%，商业-10%',stability:0,tax:0,morale:0,tianming:0,food:0.20,admin:0,army:0,build:0,eventReduce:0,diplomacy:0,popGrowth:0},
+  {id:'daojia',name:'道家',desc:'无为而治',effect:'天灾概率-30%，科技停滞',stability:0,tax:0,morale:0,tianming:0,food:0,admin:0,army:0,build:0,eventReduce:0.30,diplomacy:0,popGrowth:0},
+  {id:'mojia',name:'墨家',desc:'兼爱非攻',effect:'建筑成本-20%，军械产量+15%',stability:0,tax:0,morale:0,tianming:0,food:0,admin:0,army:0,build:-0.20,eventReduce:0,diplomacy:0,popGrowth:0},
+  {id:'zonghengjia',name:'纵横家',desc:'纵横捭阖',effect:'外交行动成功率+15%，间谍效率+10%',stability:0,tax:0,morale:0,tianming:0,food:0,admin:0,army:0,build:0,eventReduce:0,diplomacy:0.15,popGrowth:0},
+  {id:'yinyangjia',name:'阴阳家',desc:'阴阳五行',effect:'事件预警，天命+3',stability:0,tax:0,morale:0,tianming:3,food:0,admin:0,army:0,build:0,eventReduce:0,diplomacy:0,popGrowth:0},
+  {id:'yijia',name:'医家',desc:'悬壶济世',effect:'瘟疫死亡率-50%，人口增长率+0.5%',stability:0,tax:0,morale:0,tianming:0,food:0,admin:0,army:0,build:0,eventReduce:0,diplomacy:0,popGrowth:0.005}
+];
+
+const NATIONS_DATA = [
+  {id:'bei_yuan',name:'北元',type:'游牧',relation:-40,trade:0,tribute:false,army:80000,desc:'草原帝国余晖'},
+  {id:'wala',name:'瓦剌',type:'游牧',relation:-30,trade:0,tribute:false,army:60000,desc:'西部蒙古强部'},
+  {id:'dada',name:'鞑靼',type:'游牧',relation:-35,trade:0,tribute:false,army:70000,desc:'东部蒙古主力'},
+  {id:'chaoxian',name:'朝鲜',type:'藩属',relation:60,trade:1,tribute:true,army:30000,desc:'东方礼仪之邦'},
+  {id:'annan',name:'安南',type:'藩属',relation:40,trade:1,tribute:true,army:25000,desc:'交趾故地'},
+  {id:'liuqiu',name:'琉球',type:'藩属',relation:70,trade:1,tribute:true,army:5000,desc:'东海之中的藩属'},
+  {id:'riben',name:'日本',type:'外邦',relation:-20,trade:0,tribute:false,army:50000,desc:'倭国，时有倭寇'},
+  {id:'putaoya',name:'葡萄牙',type:'外邦',relation:10,trade:1,tribute:false,army:15000,desc:'佛郎机人，远来通商'},
+  {id:'xibanya',name:'西班牙',type:'外邦',relation:0,trade:0,tribute:false,army:20000,desc:'占据吕宋，图谋东方'},
+  {id:'helan',name:'荷兰',type:'外邦',relation:5,trade:1,tribute:false,army:12000,desc:'海上马车夫'}
+];
+
+const COMPANIES = [
+  {id:'c1',name:'江南织造',sector:'民生',price:100,shares:10000},{id:'c2',name:'景德官窑',sector:'民生',price:80,shares:8000},
+  {id:'c3',name:'两淮盐运',sector:'民生',price:150,shares:6000},{id:'c4',name:'苏州织造',sector:'民生',price:90,shares:9000},
+  {id:'c5',name:'杭州丝绸',sector:'民生',price:85,shares:8500},{id:'c6',name:'广东铁冶',sector:'军工',price:60,shares:12000},
+  {id:'c7',name:'遵化铁厂',sector:'军工',price:55,shares:11000},{id:'c8',name:'龙江船厂',sector:'军工',price:70,shares:7000},
+  {id:'c9',name:'神机火器',sector:'军工',price:120,shares:5000},{id:'c10',name:'太仓军械',sector:'军工',price:65,shares:9000},
+  {id:'c11',name:'漕运总司',sector:'基建',price:110,shares:8000},{id:'c12',name:'河工总局',sector:'基建',price:45,shares:14000},
+  {id:'c13',name:'驿传系统',sector:'基建',price:40,shares:15000},{id:'c14',name:'海运总司',sector:'基建',price:75,shares:7500},
+  {id:'c15',name:'北京营造',sector:'基建',price:95,shares:6500},{id:'c16',name:'川盐井务',sector:'资源',price:70,shares:8000},
+  {id:'c17',name:'江西铜矿',sector:'资源',price:50,shares:10000},{id:'c18',name:'云南银矿',sector:'资源',price:130,shares:4000},
+  {id:'c19',name:'福建茶庄',sector:'资源',price:60,shares:9000},{id:'c20',name:'湖广米市',sector:'资源',price:55,shares:11000},
+  {id:'c21',name:'山西票号',sector:'金融',price:140,shares:5000},{id:'c22',name:'徽商银号',sector:'金融',price:135,shares:5500},
+  {id:'c23',name:'龙游钱庄',sector:'金融',price:90,shares:7000},{id:'c24',name:'洞庭典当',sector:'金融',price:50,shares:12000},
+  {id:'c25',name:'京师宝钞',sector:'金融',price:160,shares:3000},{id:'c26',name:'山东盐运',sector:'民生',price:75,shares:8500},
+  {id:'c27',name:'福建海商',sector:'贸易',price:105,shares:6000},{id:'c28',name:'广东洋行',sector:'贸易',price:110,shares:5500},
+  {id:'c29',name:'宁波商帮',sector:'贸易',price:95,shares:7000},{id:'c30',name:'泉州船队',sector:'贸易',price:85,shares:6500},
+  {id:'c31',name:'辽东马市',sector:'贸易',price:45,shares:13000},{id:'c32',name:'甘肃茶马',sector:'贸易',price:40,shares:14000},
+  {id:'c33',name:'西南木商',sector:'资源',price:35,shares:15000},{id:'c34',name:'直隶铁冶',sector:'军工',price:60,shares:10000},
+  {id:'c35',name:'中都守备',sector:'基建',price:50,shares:11000}
+];
+
+const WONDERS_DATA = [
+  {id:'forbidden_city',name:'紫禁城',cost:500000,desc:'帝王居所，威加四海',effect:'行政效率+20%，天命+5',done:false,progress:0,stage:0,stages:['地基','营建大殿','宫城落成','全城竣工']},
+  {id:'grand_canal',name:'大运河',cost:400000,desc:'南北通衢，漕运命脉',effect:'漕运收入+50%，商业效率+15%',done:false,progress:0,stage:0,stages:['疏浚河道','修建闸坝','全线贯通','完善配套设施']},
+  {id:'great_wall',name:'万里长城',cost:600000,desc:'北御胡骑，固若金汤',effect:'北境防御+30%，边军维护费-20%',done:false,progress:0,stage:0,stages:['修筑烽燧','加固关隘','城墙连亘','完善防御体系']}
+];
+
+const EVENTS_POOL = [
+  {id:'locust',name:'蝗灾',type:'天灾',desc:'某省发生严重蝗灾，粮产大减',weight:p=>{let f=0;p.provinces.forEach(v=>{if(v.farm>=3&&!v.special.includes('水利'))f+=2});return f},effect:function(g){let t=g.provinces.filter(v=>v.farm>=3);if(!t.length)t=[g.provinces[Math.floor(Math.random()*g.provinces.length)]];let p=t[Math.floor(Math.random()*t.length)];p.farm=Math.max(0,p.farm-1);g.addLog(`蝗灾！${p.name}粮产下降`, 'bad');g.addNotif(`⚠️ ${p.name}发生蝗灾，粮产受损`,'bad')}},
+  {id:'yellow_river',name:'黄河决口',type:'天灾',desc:'黄河决堤，淹没沿岸农田',weight:p=>p.waterQuality<50?5:0,effect:function(g){g.waterQuality=Math.max(0,g.waterQuality-20);g.provinces.forEach(v=>{if(v.name.includes('河南')||v.name.includes('山东')||v.name.includes('南直')){v.farm=Math.max(0,v.farm-1);v.pop=Math.max(10,v.pop-5)}});g.addLog('黄河决口！沿岸受灾严重','bad');g.addNotif('🌊 黄河决口，河南山东受灾！','bad')}},
+  {id:'plague',name:'瘟疫',type:'天灾',desc:'大疫当前，人口减少',weight:p=>p.lastYearEvent==='yellow_river'?8:2,effect:function(g){let loss=Math.floor(g.population*0.03*(g.schoolEffect('yijia')?0.5:1));g.population-=loss;g.stability=Math.max(0,g.stability-5);g.addLog(`瘟疫蔓延，${loss}人染病而亡`,'bad');g.addNotif('☠️ 瘟疫爆发，人口损失惨重','bad')}},
+  {id:'prince_revolt',name:'藩王不臣',type:'内政',desc:'某地藩王有异动',weight:p=>p.stability<50&&p.provinces.some(v=>!v.official)?3:0,effect:function(g){let t=g.provinces.filter(v=>!v.official);if(t.length){let p=t[Math.floor(Math.random()*t.length)];p.loyalty=Math.max(0,(p.loyalty||50)-20);g.addLog(`${p.name}藩王心生不满`,'bad');g.addNotif(`👑 ${p.name}藩王有异动迹象`,'bad')}}},
+  {id:'exam_scandal',name:'科举舞弊',type:'内政',desc:'科举考试出现舞弊',weight:p=>p.schoolEffect('fajia')?4:1,effect:function(g){g.stability=Math.max(0,g.stability-3);g.addLog('科举舞弊案发，朝野震动','bad');g.addNotif('📜 科举舞弊案发！','bad')}},
+  {id:'good_harvest',name:'丰年',type:'吉兆',desc:'风调雨顺，五谷丰登',weight:p=>p.schoolEffect('nongjia')?3:2,effect:function(g){g.provinces.forEach(v=>{v.farm=Math.min(5,v.farm+1)});g.addLog('天下丰年，五谷丰登','good');g.addNotif('🌾 丰年！粮食产量提升','good')}},
+  {id:'trade_boom',name:'市舶兴盛',type:'吉兆',desc:'海外贸易繁荣',weight:p=>p.provinces.some(v=>v.coast&&v.market>=3)?2:0,effect:function(g){g.treasury+=5000;g.addLog('海外贸易兴盛，市舶收入大增','good');g.addNotif('🚢 市舶兴盛，国库充盈！','good')}},
+  {id:'rebel',name:'民变',type:'动乱',desc:'地方百姓因赋税过重造反',weight:p=>p.stability<35?4:0,effect:function(g){let t=g.provinces.filter(v=>v.stability<40);if(t.length){let p=t[Math.floor(Math.random()*t.length)];p.loyalty=Math.max(0,(p.loyalty||50)-30);g.stability=Math.max(0,g.stability-5);g.addLog(`${p.name}民变！'${p.name}百姓揭竿而起`,'bad');g.addNotif(`🔥 ${p.name}民变！`,'bad')}}},
+  {id:'comet',name:'彗星现世',type:'天象',desc:'彗星划过天际，人心惶惶',weight:p=>p.schoolEffect('yinyangjia')?1:2,effect:function(g){g.tianming=Math.max(0,g.tianming-3);g.addLog('彗星现世，天命有损','bad');g.addNotif('☄️ 彗星现世，天命受损！','bad')}},
+  {id:'tribute',name:'朝贡来朝',type:'外交',desc:'藩属国遣使朝贡',weight:p=>p.nations.filter(n=>n.tribute&&n.relation>50).length>0?3:0,effect:function(g){let v=g.nations.filter(n=>n.tribute&&n.relation>50);if(v.length){let n=v[Math.floor(Math.random()*v.length)];let amt=2000+Math.floor(Math.random()*3000);g.treasury+=amt;g.addLog(`${n.name}遣使朝贡，获银${amt}两`,'good');g.addNotif(`🎁 ${n.name}朝贡，获银${amt}两`,'good')}}},
+  {id:'corruption',name:'贪腐案',type:'内政',desc:'官员贪腐被揭发',weight:p=>p.officials.some(o=>o.corruption>60)?4:1,effect:function(g){let corrupt=g.officials.filter(o=>o.corruption>60);if(corrupt.length){let o=corrupt[Math.floor(Math.random()*corrupt.length)];g.fireOfficial(o);g.addLog(`${o.name}贪腐被查，革职查办`,'good');g.addNotif(`⚖️ ${o.name}贪腐被查！`,'good')}}}
+];
+
+const WAR_JUSTIFICATIONS = [
+  {id:'tian_tao',name:'天讨不臣',desc:'征讨不臣之国',cond:g=>g.nations.some(n=>n.relation<-30),effect:'天命+5，士气+10%',tianming:5,morale:0.1},
+  {id:'recover',name:'收复失地',desc:'收复被占城池',cond:g=>g.lostTerritories>0,effect:'该城敌军防御-15%',tianming:0,morale:0},
+  {id:'qing_jun_ce',name:'清君侧',desc:'清除奸臣',cond:g=>g.stability<40&&g.officials.some(o=>o.corruption>70),effect:'内战专用，敌方可能倒戈',tianming:0,morale:0.15},
+  {id:'suppress_rebel',name:'剿寇平乱',desc:'平定地方叛乱',cond:g=>g.stability<50||g.activeRebels>0,effect:'平叛效率+20%',tianming:0,morale:0},
+  {id:'defend',name:'御虏保境',desc:'抵御外敌入侵',cond:g=>g.underAttack,effect:'防御战军费-30%',tianming:0,morale:0.05},
+  {id:'punish_corrupt',name:'惩贪除恶',desc:'整肃吏治',cond:g=>g.pendingImpeachments>3,effect:'获得"整肃"buff，官员腐败-10%',tianming:0,morale:0},
+  {id:'jing_nan',name:'靖难',desc:'平定宗室内乱',cond:g=>g.princeRebellion,effect:'宗室内战，天命不扣',tianming:0,morale:0},
+  {id:'suppress_wokou',name:'平倭',desc:'清剿倭寇',cond:g=>g.provinces.some(v=>v.coast&&v.wokouDamage>0),effect:'水军战力+15%',tianming:0,morale:0},
+  {id:'subdue_miao',name:'征苗/改土归流',desc:'征讨西南土司',cond:g=>['yunnan','guizhou','guangxi'].some(id=>g.provinces.find(v=>v.id===id)&&(v.loyalty||50)<40),effect:'云南/贵州/广西可用',tianming:0,morale:0},
+  {id:'expand',name:'开疆拓土',desc:'扩张疆域',cond:()=>true,effect:'天命-10，稳定-5，国际声望-20',tianming:-10,morale:0},
+  {id:'qin_wang',name:'勤王',desc:'京营调离京师时回防',cond:g=>g.capitalGarrison<g.capitalGarrisonBase*0.5,effect:'护驾勤王，士气+20%',tianming:0,morale:0.2},
+  {id:'protect_vassal',name:'护藩',desc:'保护藩属国',cond:g=>g.nations.some(n=>n.tribute&&n.relation>40&&n.underAttack),effect:'藩属国忠诚+20',tianming:2,morale:0.05}
+];
+
+// ============================
+// 2.  GAME STATE
+// ============================
+
+let G = null;
+
+function createGame(){
+  let g = {
+    year: 1368, era: '洪武', eraYear: 1,
+    population: 0,
+    treasury: 30000,
+    stability: 60,
+    tianming: 70,
+    adminPoints: 100,
+    maxAdminPoints: 100,
+    waterQuality: 60,
+    inflation: 0,
+    bankReserve: 0.15,
+    interestRate: 0.08,
+    depositRate: 0.03,
+    lostTerritories: 0,
+    activeRebels: 0,
+    underAttack: false,
+    pendingImpeachments: 0,
+    princeRebellion: false,
+    capitalGarrison: 50000,
+    capitalGarrisonBase: 50000,
+    turn: 0,
+    log: [],
+    notifications: [],
+    provinces: [],
+    officials: [],
+    military: {jingying:{name:'京营',total:50000,training:60,equip:50,location:'zhili',morale:60}, jiubian:{}, weisuo:[]},
+    nations: [],
+    companies: [],
+    schools: [],
+    activeSchool: 'rujia',
+    schoolInfluence: {},
+    examPool: [],
+    pendingEvents: [],
+    wonders: [],
+    currentEvents: [],
+    warJustifications: [],
+    battles: [],
+    playersStocks: {},
+    playersFutures: {},
+    playerBank: {deposit:0,loan:0},
+    eraNames: {
+      1368:'洪武',1399:'建文',1403:'永乐',1425:'洪熙',1426:'宣德',
+      1436:'正统',1450:'景泰',1457:'天顺',1465:'成化',1488:'弘治',
+      1506:'正德',1522:'嘉靖',1567:'隆庆',1573:'万历',1620:'泰昌',
+      1621:'天启',1628:'崇祯'
+    }
+  };
+
+  // 省
+  g.provinces = PROVINCES_DATA.map(d=>({
+    ...d,pop:d.pop*10000,officials:[],buildings:{farm:d.farm,market:d.market,granary:0},
+    loyalty:50+Math.floor(Math.random()*20),stability:50+Math.floor(Math.random()*10),
+    corruption:20+Math.floor(Math.random()*30),garrison:d.garrison,
+    wokouDamage:0,devastation:0
+  }));
+  g.population = g.provinces.reduce((s,v)=>s+v.pop,0);
+
+  // 官员
+  g.officials = OFFICE_POSITIONS.map(p=>makeOfficial(p));
+  // 加一些地方官
+  let names = ['张居正','徐阶','高拱','王阳明','杨廷和','夏言','严嵩','海瑞','戚继光','俞大猷',
+    '胡宗宪','谭纶','王守仁','于谦','李贤','商辂','杨士奇','杨荣','金幼孜','解缙',
+    '方孝孺','黄淮','胡俨','陈循','王文','许彬','徐有贞','李东阳','焦芳','王鏊',
+    '杨一清','费宏','蒋冕','毛纪','石珤','贾咏','席书','张璁','翟銮','李时'];
+  for(let i=0;i<20;i++){
+    let n=names[Math.floor(Math.random()*names.length)];
+    g.officials.push({
+      id:'off_'+Date.now()+'_'+i, name:n, age:30+Math.floor(Math.random()*25),
+      ability:40+Math.floor(Math.random()*60), loyalty:40+Math.floor(Math.random()*60),
+      corruption:10+Math.floor(Math.random()*80), faction:['东林','浙党','楚党','齐党','宣党','无'][Math.floor(Math.random()*6)],
+      health:70+Math.floor(Math.random()*30), position:'地方官', province:g.provinces[Math.floor(Math.random()*g.provinces.length)].id
+    });
+  }
+
+  // 军事
+  g.military.jiubian = {
+    liaodong:{name:'辽东镇',troops:40000,training:50,equip:40,morale:50,general:null},
+    jizhou:{name:'蓟州镇',troops:30000,training:55,equip:45,morale:55,general:null},
+    xuanfu:{name:'宣府镇',troops:28000,training:50,equip:40,morale:50,general:null},
+    datong:{name:'大同镇',troops:35000,training:50,equip:40,morale:50,general:null},
+    taiyuan:{name:'太原镇',troops:25000,training:45,equip:35,morale:45,general:null},
+    yansui:{name:'延绥镇',troops:30000,training:45,equip:35,morale:45,general:null},
+    ningxia:{name:'宁夏镇',troops:30000,training:45,equip:35,morale:45,general:null},
+    gansu:{name:'甘肃镇',troops:35000,training:45,equip:35,morale:45,general:null},
+    guyuan:{name:'固原镇',troops:20000,training:40,equip:30,morale:40,general:null}
+  };
+  g.military.weisuo = g.provinces.map(p=>({province:p.id,troops:Math.floor(p.pop*0.02),training:30,equip:20,morale:30}));
+
+  // 外交
+  g.nations = NATIONS_DATA.map(n=>({...n}));
+
+  // 市舶公司
+  g.companies = COMPANIES.map(c=>({...c,price:c.price,volatility:0.1+Math.random()*0.2}));
+
+  // 学派
+  g.schools = SCHOOLS_DATA.map(s=>({...s,influence:10}));
+  g.schools[0].influence = 30; // 儒家初始优势
+  g.schoolInfluence = {rujia:30};
+  SCHOOLS_DATA.forEach(s=>{if(s.id!=='rujia')g.schoolInfluence[s.id]=10});
+
+  // 科举人才池
+  g.examPool = [];
+  // 奇观
+  g.wonders = WONDERS_DATA.map(w=>({...w}));
+
+  return g;
+}
+
+function makeOfficial(pos){
+  let names = ['张居正','徐阶','高拱','杨廷和','夏言','严嵩','海瑞','王守仁','于谦','李贤',
+    '商辂','杨士奇','杨荣','解缙','方孝孺','黄淮','胡俨','陈循','徐有贞','李东阳',
+    '杨一清','费宏','蒋冕','毛纪','张璁','翟銮','李时','严讷','郭朴','袁炜'];
+  let n = names[Math.floor(Math.random()*names.length)];
+  return {
+    id:pos.id, name:n, age:35+Math.floor(Math.random()*20), position:pos.name,
+    dept:pos.dept, ability:50+Math.floor(Math.random()*50), loyalty:40+Math.floor(Math.random()*60),
+    corruption:10+Math.floor(Math.random()*80), faction:['东林','浙党','楚党','齐党','宣党','无'][Math.floor(Math.random()*6)],
+    health:70+Math.floor(Math.random()*30), slot:pos.slot, effect:pos.effect, empty:false
+  };
+}
+
+// ============================
+// 3.  UTILITY
+// ============================
+
+G = createGame();
+
+function schoolEffect(id){
+  let s = G.schools.find(x=>x.id===id);
+  return s && s.influence > 15;
+}
+
+function getSchool(id){return G.schools.find(x=>x.id===id)}
+
+function getProvince(id){return G.provinces.find(x=>x.id===id)}
+
+function getOfficial(posId){return G.officials.find(x=>x.id===posId)}
+
+function getActiveSchool(){return getSchool(G.activeSchool)}
+
+function ministerBonus(deptId){
+  let off = G.officials.find(o=>o.id===deptId);
+  return off&&!off.empty ? off.ability/100 : 0.5;
+}
+
+function addLog(msg,type='info'){
+  G.log.unshift({year:G.year,era:G.era,msg,type});
+  if(G.log.length>200)G.log.pop();
+}
+
+function addNotif(msg,type='info'){
+  let el = document.createElement('div');
+  el.className='notif '+type;
+  el.textContent=msg;
+  document.getElementById('notification').appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+// ============================
+// 4.  ANNUAL REVIEW ENGINE (18步)
+// ============================
+
+function annualReview(){
+  if(!confirm(`【${G.era}${G.eraYear}年】· 上朝进奏？\n当前国库：${G.treasury.toLocaleString()}两`))return;
+
+  addLog(`=== ${G.era}${G.eraYear}年 推演开始 ===`,'info');
+  addNotif(`📜 ${G.era}${G.eraYear}年 上朝进奏`,'info');
+
+  // 1. 年份&年号
+  G.year++;
+  G.eraYear++;
+  if(G.eraNames[G.year]){
+    G.era = G.eraNames[G.year];
+    G.eraYear = 1;
+    addLog(`年号变更：${G.era}元年`,'event');
+    addNotif(`👑 年号变更为${G.era}`,'event');
+  }
+
+  // 2. 官员 aging & 致仕
+  G.officials.forEach(o=>{
+    o.age++;
+    if(o.age>70 && Math.random()<0.3){
+      addLog(`${o.name}（${o.position}）致仕`,'info');
+      o.empty = true;
+    }
+    o.health = Math.max(0,o.health - (Math.random()<0.1?5:0));
+    if(o.health<=0){
+      addLog(`${o.name}（${o.position}）病逝`,'bad');
+      o.empty = true;
+    }
+  });
+  // 补位
+  fillVacancies();
+
+  // 3. 建筑缓存更新
+  G.provinces.forEach(p=>{
+    p.buildings.farm = Math.max(0,Math.min(5,p.farm));
+    p.buildings.market = Math.max(0,Math.min(5,p.market));
+  });
+
+  // 4. 人口增长
+  let popGrowthRate = 0.015 * (1 + (G.stability-50)/100) * (schoolEffect('yijia')?1.005:1);
+  G.provinces.forEach(p=>{
+    let growth = Math.floor(p.pop * popGrowthRate);
+    p.pop += growth;
+  });
+  G.population = G.provinces.reduce((s,v)=>s+v.pop,0);
+
+  // 5. 粮产结算
+  let totalFood = 0;
+  G.provinces.forEach(p=>{
+    let offBonus = p.official ? getAbilityBonus(p.official) : 0.5;
+    let farmBonus = 1 + p.buildings.farm * 0.15;
+    let schoolBonus = schoolEffect('nongjia') ? 1.2 : 1;
+    let prod = Math.floor(p.pop * 0.1 * farmBonus * offBonus * schoolBonus);
+    p.foodProd = prod;
+    totalFood += prod;
+  });
+  G.foodProduction = totalFood;
+
+  // 6. 商业结算
+  let totalCommerce = 0;
+  G.provinces.forEach(p=>{
+    let offBonus = p.official ? getAbilityBonus(p.official) : 0.5;
+    let marketBonus = 1 + p.buildings.market * 0.2;
+    let inflationMod = 1 + G.inflation * 0.5;
+    let prod = Math.floor(p.pop * 0.05 * marketBonus * offBonus * inflationMod);
+    p.commerceProd = prod;
+    totalCommerce += prod;
+  });
+
+  // 7. 国库收支
+  let taxRate = 0.08 + ministerBonus('minister_hu')*0.05 - (getActiveSchool()&&getActiveSchool().tax||0);
+  let taxIncome = Math.floor(totalCommerce * taxRate);
+  let canalIncome = Math.floor(3000 * (G.waterQuality/100) * (1 + ministerBonus('minister_gong')*0.1));
+  let tributeIncome = 0;
+  G.nations.forEach(n=>{if(n.tribute&&n.relation>40)tributeIncome+=500+Math.floor(Math.random()*1000)});
+  let militaryCost = Math.floor(G.military.jingying.troops*0.08 + Object.values(G.military.jiubian).reduce((s,v)=>s+v.troops*0.06,0) + G.military.weisuo.reduce((s,v)=>s+v.troops*0.03,0));
+  let salaryCost = Math.floor(G.officials.filter(o=>!o.empty).length * 200);
+  let buildingMaintenance = Math.floor(G.provinces.reduce((s,p)=>s+p.buildings.farm*100+p.buildings.market*150,0));
+  G.treasury += taxIncome + canalIncome + tributeIncome - militaryCost - salaryCost - buildingMaintenance;
+  G.taxIncome = taxIncome;
+  G.canalIncome = canalIncome;
+  G.tributeIncome = tributeIncome;
+  G.militaryCost = militaryCost;
+
+  // 结算奇观投入
+  G.wonders.forEach(w=>{
+    if(!w.done && w.progress>0){
+      G.treasury -= w.progress;
+      w.stageProgress = (w.stageProgress||0) + w.progress;
+      if(w.stageProgress >= w.cost * (w.stage+1) / w.stages.length){
+        w.stage = Math.min(w.stages.length-1, w.stage+1);
+        w.stageProgress = 0;
+        addLog(`${w.name}进入${w.stages[w.stage]}阶段`,'good');
+        addNotif(`🏗️ ${w.name}进度：${w.stages[w.stage]}`,'good');
+        if(w.stage >= w.stages.length-1){
+          w.done = true;
+          addLog(`${w.name}竣工！`,'good');
+          addNotif(`✨ ${w.name}竣工！天下震动`,'good');
+        }
+      }
+    }
+  });
+
+  // 8. 银行结算
+  let bankDeposit = G.playerBank.deposit;
+  let bankLoan = G.playerBank.loan;
+  let interestIncome = Math.floor(bankLoan * G.interestRate);
+  let interestCost = Math.floor(bankDeposit * G.depositRate);
+  G.treasury += interestIncome - interestCost;
+  G.playerBank.deposit += interestCost;
+  G.playerBank.loan += interestIncome;
+  G.inflation = Math.max(0, Math.min(0.3, G.inflation + (G.bankReserve>0.15?-0.005:0.01)));
+
+  // 9. 股价波动
+  G.companies.forEach(c=>{
+    let change = (Math.random()-0.5) * c.volatility;
+    if(G.underAttack && c.sector==='军工')change += 0.1;
+    if(!G.underAttack && c.sector==='民生')change += 0.05;
+    c.price = Math.max(10, Math.floor(c.price * (1 + change)));
+  });
+
+  // 10. 期货价格
+  let futuresPrices = {
+    grain: Math.floor(50 + (G.foodProduction<500000?30:0) + (Math.random()-0.5)*10),
+    iron: Math.floor(40 + (G.underAttack?20:0) + (Math.random()-0.5)*8),
+    salt: Math.floor(60 + (Math.random()-0.5)*8),
+    horse: Math.floor(100 + (G.nations.filter(n=>n.relation<0).length>2?30:0) + (Math.random()-0.5)*15),
+    silk: Math.floor(80 + (G.provinces.some(p=>p.coast)?10:0) + (Math.random()-0.5)*12)
+  };
+  G.futuresPrices = futuresPrices;
+
+  // 11. 外交关系自然变化
+  G.nations.forEach(n=>{
+    let change = (Math.random()-0.5) * 5;
+    if(schoolEffect('zonghengjia'))change += 2;
+    if(n.tribute && G.treasury<0)change -= 3;
+    n.relation = Math.max(-100, Math.min(100, n.relation + Math.floor(change)));
+  });
+
+  // 12. 复国主义消退
+  G.lostTerritories = Math.max(0, G.lostTerritories - (Math.random()<0.3?1:0));
+
+  // 13. 学派影响力
+  let totalInfl = 0;
+  Object.keys(G.schoolInfluence).forEach(k=>{
+    let change = (Math.random()-0.5)*2;
+    G.schoolInfluence[k] = Math.max(5, Math.min(40, G.schoolInfluence[k] + change));
+    totalInfl += G.schoolInfluence[k];
+  });
+  // normalize
+  if(totalInfl>0){
+    Object.keys(G.schoolInfluence).forEach(k=>{
+      G.schoolInfluence[k] = Math.round(G.schoolInfluence[k] / totalInfl * 100);
+    });
+  }
+
+  // 14. 弹劾刷新
+  let censorBonus = ministerBonus('censor_left');
+  let foundCases = Math.floor(censorBonus * (Math.random()*3));
+  G.pendingImpeachments = foundCases;
+  if(foundCases>0)addLog(`都察院发现${foundCases}件弹劾案件`,'info');
+
+  // 15. 事件触发
+  G.currentEvents = [];
+  let triggered = 0;
+  let shuffled = [...EVENTS_POOL].sort(()=>Math.random()-0.5);
+  for(let evt of shuffled){
+    if(triggered>=3)break;
+    let w = evt.weight(G);
+    if(w>0 && Math.random()*10 < w){
+      evt.effect(G);
+      G.currentEvents.push(evt.id);
+      G.lastYearEvent = evt.id;
+      triggered++;
+    }
+  }
+  if(triggered===0){
+    addLog('今年太平无事','good');
+    G.lastYearEvent = null;
+  }
+
+  // 16. 名分刷新
+  G.warJustifications = WAR_JUSTIFICATIONS.filter(j=>j.cond(G)).map(j=>j.id);
+
+  // 17. 稳定度/天命终算
+  let schoolStabBonus = getActiveSchool() ? getActiveSchool().stability||0 : 0;
+  let schoolTianmingBonus = getActiveSchool() ? getActiveSchool().tianming||0 : 0;
+  let wonderBonus = G.wonders.filter(w=>w.done).reduce((s,w)=>{
+    if(w.id==='forbidden_city')return s+5;
+    return s;
+  },0);
+  G.stability = Math.max(0, Math.min(100, G.stability + (G.treasury>0?2:-3) + schoolStabBonus*100 + (G.population>G.provinces.reduce((s,p)=>s+p.popBase*10000,0)?-1:1)));
+  G.tianming = Math.max(0, Math.min(100, G.tianming + (G.stability>50?1:-2) + schoolTianmingBonus + wonderBonus));
+
+  // 18. 行政点恢复
+  G.adminPoints = Math.min(G.maxAdminPoints, G.adminPoints + 10 + Math.floor(ministerBonus('minister_li')*5));
+
+  // 更新UI
+  G.turn++;
+  updateAll();
+  addLog(`=== ${G.era}${G.eraYear}年 推演结束 ===`,'info');
+  addNotif(`📊 ${G.era}${G.eraYear}年推演完成`,'good');
+  checkGameOver();
+}
+
+function checkGameOver(){
+  let msgs = [];
+  if(G.tianming<=0)msgs.push('天命已尽，王朝覆灭...');
+  if(G.stability<=0)msgs.push('天下大乱，社稷崩摧...');
+  if(G.treasury<-50000)msgs.push('国库空虚，积重难返...');
+  if(msgs.length){
+    setTimeout(()=>{
+      showModal('⚠️ 国运告急',`<div style="text-align:center;padding:20px;font-size:16px;color:var(--accent-red)">${msgs.join('<br>')}<br><br>你已在位${G.turn}年</div>`,[{text:'重整河山',cls:'btn-gold',fn:()=>{closeModal();G=createGame();updateAll()}}]);
+    },500);
+  }
+}
+
+function getAbilityBonus(officialId){
+  let o = G.officials.find(x=>x.id===officialId);
+  if(!o||o.empty)return 0.5;
+  return 0.3 + (o.ability/100)*0.7;
+}
+
+function fillVacancies(){
+  OFFICE_POSITIONS.forEach(pos=>{
+    let o = G.officials.find(x=>x.id===pos.id);
+    if(o && o.empty){
+      // 从人才池或examPool选人
+      let candidates = G.examPool.filter(c=>c.ability>40);
+      if(candidates.length){
+        let best = candidates.sort((a,b)=>b.ability-a.ability)[0];
+        o.name = best.name;
+        o.age = best.age;
+        o.ability = best.ability;
+        o.loyalty = 40+Math.floor(Math.random()*60);
+        o.corruption = 10+Math.floor(Math.random()*80);
+        o.faction = best.faction||'无';
+        o.health = 70+Math.floor(Math.random()*30);
+        o.empty = false;
+        G.examPool = G.examPool.filter(c=>c!==best);
+        addLog(`${best.name}补任${pos.name}`,'good');
+      }else{
+        // 随机生成
+        o.empty = false;
+        o.age = 30+Math.floor(Math.random()*15);
+        o.ability = 30+Math.floor(Math.random()*50);
+        o.loyalty = 40+Math.floor(Math.random()*60);
+        o.corruption = 20+Math.floor(Math.random()*70);
+        o.health = 70+Math.floor(Math.random()*30);
+        addLog(`新晋官员补任${pos.name}`,'info');
+      }
+    }
+  });
+}
+
+// ============================
+// 5.  UI RENDERING
+// ============================
+
+function updateAll(){
+  updateTopBar();
+  renderPanels();
+}
+
+function updateTopBar(){
+  let el = document.getElementById('top-info');
+  let stClass = G.stability>50?'good':G.stability>25?'':'danger';
+  let tmClass = G.tianming>50?'good':G.tianming>25?'':'danger';
+  el.innerHTML = `
+    <span class="item"><span class="label">📅</span><span class="val">${G.era}${G.eraYear}年</span></span>
+    <span class="item"><span class="label">💰</span><span class="val ${G.treasury<0?'danger':'good'}">${G.treasury.toLocaleString()}</span></span>
+    <span class="item"><span class="label">👥</span><span class="val">${(G.population/10000).toFixed(1)}万</span></span>
+    <span class="item"><span class="label">🏛</span><span class="val ${stClass}">${G.stability.toFixed(0)}</span></span>
+    <span class="item"><span class="label">☀</span><span class="val ${tmClass}">${G.tianming.toFixed(0)}</span></span>
+    <span class="item"><span class="label">📋</span><span class="val">${G.adminPoints}/${G.maxAdminPoints}</span></span>
+  `;
+}
+
+function switchPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  let p = document.getElementById('panel-'+name);
+  if(p)p.classList.add('active');
+  let n = document.querySelector(`.nav-item[data-panel="${name}"]`);
+  if(n)n.classList.add('active');
+  renderPanels();
+}
+
+function renderPanels(){
+  let active = document.querySelector('.panel.active');
+  if(!active)return;
+  let id = active.id.replace('panel-','');
+  switch(id){
+    case 'overview':renderOverview();break;
+    case 'provinces':renderProvinces();break;
+    case 'officials':renderOfficials();break;
+    case 'military':renderMilitary();break;
+    case 'economy':renderEconomy();break;
+    case 'diplomacy':renderDiplomacy();break;
+    case 'schools':renderSchools();break;
+    case 'exam':renderExam();break;
+    case 'events':renderEvents();break;
+    case 'wonders':renderWonders();break;
+    case 'log':renderLog();break;
+  }
+}
+
+// ========== OVERVIEW ==========
+function renderOverview(){
+  let el = document.getElementById('panel-overview');
+  let st = G.stability, tm = G.tianming;
+  let stCls = st>50?'good':st>25?'warn':'danger';
+  let tmCls = tm>50?'good':tm>25?'warn':'danger';
+  let school = getActiveSchool();
+  el.innerHTML = `
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">国运概览</div>
+        <table>
+          <tr><td>年号</td><td class="text-gold">${G.era} ${G.eraYear}年</td><td>在位</td><td class="text-gold">${G.turn}年</td></tr>
+          <tr><td>总人口</td><td class="text-bright">${G.population.toLocaleString()}</td><td>税赋收入</td><td class="text-gold">${(G.taxIncome||0).toLocaleString()}两</td></tr>
+          <tr><td>漕运收入</td><td class="text-gold">${(G.canalIncome||0).toLocaleString()}两</td><td>军费支出</td><td class="text-red">${(G.militaryCost||0).toLocaleString()}两</td></tr>
+          <tr><td>粮产总量</td><td class="text-green">${(G.foodProduction||0).toLocaleString()}石</td><td>通货膨胀</td><td class="${G.inflation>0.15?'text-red':'text-green'}">${(G.inflation*100).toFixed(1)}%</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-header">核心指标</div>
+        <div style="margin-bottom:12px">
+          <div class="flex" style="justify-content:space-between"><span>稳定度</span><span class="text-${stCls}">${st.toFixed(1)}/100</span></div>
+          <div class="progress-bar"><div class="fill ${stCls}" style="width:${st}%"></div></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="flex" style="justify-content:space-between"><span>天命</span><span class="text-${tmCls}">${tm.toFixed(1)}/100</span></div>
+          <div class="progress-bar"><div class="fill ${tmCls}" style="width:${tm}%"></div></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="flex" style="justify-content:space-between"><span>行政点</span><span>${G.adminPoints}/${G.maxAdminPoints}</span></div>
+          <div class="progress-bar"><div class="fill blue" style="width:${G.adminPoints/G.maxAdminPoints*100}%"></div></div>
+        </div>
+        <div>
+          <div class="flex" style="justify-content:space-between"><span>主流学派</span><span class="text-gold">${school?school.name:'无'}</span></div>
+          <div class="flex" style="justify-content:space-between"><span>水利质量</span><span>${G.waterQuality}/100</span></div>
+          <div class="flex" style="justify-content:space-between"><span>银行准备金率</span><span>${(G.bankReserve*100).toFixed(0)}%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">朝堂要员</div>
+        <table>
+          ${G.officials.filter(o=>!o.empty&&o.slot).slice(0,6).map(o=>`<tr><td>${o.position}</td><td class="text-gold">${o.name}</td><td>能力${o.ability}</td><td>${o.faction}</td></tr>`).join('')}
+        </table>
+        <div class="mt-8 text-center"><button class="btn btn-sm" onclick="switchPanel('officials')">查看全部官员 →</button></div>
+      </div>
+      <div class="card">
+        <div class="card-header">可宣战名分</div>
+        <div class="flex flex-wrap" style="gap:4px">
+          ${G.warJustifications.length?G.warJustifications.map(j=>{
+            let jd = WAR_JUSTIFICATIONS.find(w=>w.id===j);
+            return jd?`<span class="btn btn-sm" style="cursor:default;background:var(--bg-hover);border-color:var(--war)">${jd.name}</span>`:'';
+          }).join(''):'<span class="text-dim">当前无名分可用</span>'}
+        </div>
+      </div>
+    </div>
+    ${G.wonders.filter(w=>w.done).length?`<div class="card"><div class="card-header">已竣工奇观</div><div class="flex flex-wrap gap-4">${G.wonders.filter(w=>w.done).map(w=>`<span class="btn btn-sm btn-gold" style="cursor:default">${w.name} ✓</span>`).join('')}</div></div>`:''}
+  `;
+}
+
+// ========== PROVINCES ==========
+function renderProvinces(){
+  let el = document.getElementById('panel-provinces');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">两京十三省 <span class="sub">总人口：${G.population.toLocaleString()}</span></div>
+      <table>
+        <tr><th>省份</th><th>类型</th><th>人口</th><th>农田</th><th>市肆</th><th>驻军</th><th>忠诚</th><th>卫所兵</th><th>官员</th></tr>
+        ${G.provinces.map(p=>`<tr class="clickable" onclick="showProvince('${p.id}')">
+          <td class="text-gold">${p.name}</td>
+          <td class="text-dim">${p.type}</td>
+          <td>${(p.pop/10000).toFixed(1)}万</td>
+          <td>${'★'.repeat(p.buildings.farm)}${'☆'.repeat(5-p.buildings.farm)}</td>
+          <td>${'★'.repeat(p.buildings.market)}${'☆'.repeat(5-p.buildings.market)}</td>
+          <td>${(p.garrison/1000).toFixed(0)}k</td>
+          <td class="${(p.loyalty||50)<40?'text-red':(p.loyalty||50)>60?'text-green':'text-gold'}">${p.loyalty||50}</td>
+          <td>${(G.military.weisuo.find(w=>w.province===p.id)?.troops/1000).toFixed(0)||0}k</td>
+          <td>${p.official?p.official:'—'}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  `;
+}
+
+function showProvince(id){
+  let p = getProvince(id);
+  if(!p)return;
+  let ws = G.military.weisuo.find(w=>w.province===id);
+  let offs = G.officials.filter(o=>o.province===id&&!o.empty);
+  showModal(p.name,`
+    <div class="grid-2">
+      <div><b>类型：</b>${p.type}</div>
+      <div><b>特殊：</b>${p.special}</div>
+      <div><b>人口：</b>${p.pop.toLocaleString()}</div>
+      <div><b>驻军：</b>${p.garrison.toLocaleString()}</div>
+      <div><b>农田等级：</b>${p.buildings.farm}/5</div>
+      <div><b>市肆等级：</b>${p.buildings.market}/5</div>
+      <div><b>忠诚度：</b>${p.loyalty||50}</div>
+      <div><b>卫所兵：</b>${ws?ws.troops.toLocaleString():0}</div>
+    </div>
+    <div class="section-title">地方官</div>
+    ${offs.length?offs.map(o=>`<div>${o.name}（能力${o.ability}·${o.faction}）</div>`).join(''):'<span class="text-dim">无地方官</span>'}
+    <div class="section-title">描述</div>
+    <div class="text-dim">${p.desc}</div>
+  `,[{text:'关闭',cls:'',fn:closeModal}]);
+}
+
+// ========== OFFICIALS ==========
+function renderOfficials(){
+  let el = document.getElementById('panel-officials');
+  let core = G.officials.filter(o=>o.slot);
+  let local = G.officials.filter(o=>!o.slot);
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">内阁·六部·都察院 <span class="sub">共${core.filter(o=>!o.empty).length}/${core.length}在职</span></div>
+      <table>
+        <tr><th>职位</th><th>姓名</th><th>年龄</th><th>能力</th><th>忠诚</th><th>腐败</th><th>派系</th><th>状态</th><th>操作</th></tr>
+        ${core.map(o=>`<tr>
+          <td class="text-gold">${o.position}</td>
+          <td>${o.empty?'〈空缺〉':o.name}</td>
+          <td>${o.empty?'—':o.age}</td>
+          <td>${o.empty?'—':`<span class="${o.ability>70?'text-green':o.ability>40?'text-gold':'text-red'}">${o.ability}</span>`}</td>
+          <td>${o.empty?'—':o.loyalty}</td>
+          <td>${o.empty?'—':`<span class="${o.corruption>60?'text-red':o.corruption>30?'text-gold':'text-green'}">${o.corruption}</span>`}</td>
+          <td>${o.empty?'—':o.faction}</td>
+          <td>${o.empty?'<span class="text-red">空缺</span>':o.age>65?'<span class="text-gold">将致仕</span>':'<span class="text-green">在职</span>'}</td>
+          <td>${o.empty?'<button class="btn btn-sm btn-gold" onclick="fillPosition(\''+o.id+'\')">任命</button>':'<button class="btn btn-sm" onclick="showOfficial(\''+o.id+'\')">详情</button>'}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header">地方官员 <span class="sub">${local.filter(o=>!o.empty).length}人</span></div>
+      <table>
+        <tr><th>姓名</th><th>年龄</th><th>能力</th><th>忠诚</th><th>腐败</th><th>派系</th><th>所在地</th></tr>
+        ${local.filter(o=>!o.empty).slice(0,20).map(o=>`<tr class="clickable" onclick="showOfficial('${o.id}')">
+          <td>${o.name}</td><td>${o.age}</td>
+          <td><span class="${o.ability>70?'text-green':o.ability>40?'text-gold':'text-red'}">${o.ability}</span></td>
+          <td>${o.loyalty}</td>
+          <td><span class="${o.corruption>60?'text-red':o.corruption>30?'text-gold':'text-green'}">${o.corruption}</span></td>
+          <td>${o.faction}</td>
+          <td>${o.province?getProvince(o.province)?.name||'—':'—'}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  `;
+}
+
+function showOfficial(id){
+  let o = G.officials.find(x=>x.id===id);
+  if(!o)return;
+  showModal(o.name,`
+    <div class="grid-2">
+      <div><b>职位：</b>${o.position||'地方官'}</div>
+      <div><b>部门：</b>${o.dept||'—'}</div>
+      <div><b>年龄：</b>${o.age}岁</div>
+      <div><b>派系：</b>${o.faction}</div>
+      <div><b>能力：</b>${o.ability}/100
+        <div class="progress-bar"><div class="fill blue" style="width:${o.ability}%"></div></div>
+      </div>
+      <div><b>忠诚：</b>${o.loyalty}/100
+        <div class="progress-bar"><div class="fill ${o.loyalty>60?'good':o.loyalty>30?'warn':'danger'}" style="width:${o.loyalty}%"></div></div>
+      </div>
+      <div><b>腐败：</b>${o.corruption}/100
+        <div class="progress-bar"><div class="fill ${o.corruption>60?'danger':o.corruption>30?'warn':'good'}" style="width:${o.corruption}%"></div></div>
+      </div>
+      <div><b>健康：</b>${o.health}/100
+        <div class="progress-bar"><div class="fill ${o.health>60?'good':'warn'}" style="width:${o.health}%"></div></div>
+      </div>
+    </div>
+    ${o.effect?`<div class="mt-8"><b>修正：</b>${o.effect}</div>`:''}
+  `,[{text:'关闭',cls:'',fn:closeModal}]);
+}
+
+function fillPosition(posId){
+  let o = G.officials.find(x=>x.id===posId);
+  if(!o)return;
+  let candidates = G.examPool.filter(c=>c.ability>30);
+  if(!candidates.length){
+    // 从地方官里选
+    candidates = G.officials.filter(c=>!c.slot&&!c.empty).sort((a,b)=>b.ability-a.ability);
+  }
+  if(!candidates.length){
+    showModal('无人可用','<div class="text-red">人才池已空，请先举行科举取士</div>',[{text:'明白了',cls:'',fn:closeModal}]);
+    return;
+  }
+  let list = candidates.slice(0,8).map(c=>`<div style="padding:6px;cursor:pointer;border-bottom:1px solid var(--border)" onclick="confirmFill('${posId}','${c.id}')">${c.name}（能力${c.ability}·${c.faction}·${c.position||'待选'}）</div>`).join('');
+  showModal('选任官员',`<div>为 <b>${o.position}</b> 选任官员：</div><div class="mt-8">${list}</div>`,[{text:'取消',cls:'',fn:closeModal}]);
+}
+
+function confirmFill(posId, candId){
+  let o = G.officials.find(x=>x.id===posId);
+  let c = G.officials.find(x=>x.id===candId) || G.examPool.find(x=>x.id===candId);
+  if(!o||!c)return;
+  o.name = c.name;
+  o.age = c.age;
+  o.ability = c.ability;
+  o.loyalty = c.loyalty||40;
+  o.corruption = c.corruption||20;
+  o.faction = c.faction||'无';
+  o.health = c.health||70;
+  o.empty = false;
+  // 从原位置移除
+  if(c.slot){
+    // 同名官员，只复制数据
+  }else{
+    c.empty = true;
+  }
+  G.examPool = G.examPool.filter(x=>x.id!==candId);
+  addLog(`${o.name}出任${o.position}`,'good');
+  addNotif(`👤 ${o.name}出任${o.position}`,'good');
+  closeModal();
+  renderPanels();
+}
+
+// ========== MILITARY ==========
+function renderMilitary(){
+  let el = document.getElementById('panel-military');
+  let jy = G.military.jingying;
+  let jb = Object.values(G.military.jiubian);
+  let ws = G.military.weisuo;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">京营 <span class="sub">机动部队</span></div>
+      <table>
+        <tr><th>名称</th><th>兵力</th><th>操练度</th><th>装备</th><th>士气</th><th>驻地</th><th>操作</th></tr>
+        <tr>
+          <td class="text-gold">${jy.name}</td>
+          <td>${jy.troops.toLocaleString()}</td>
+          <td>${jy.training}/100 <div class="progress-bar"><div class="fill blue" style="width:${jy.training}%"></div></div></td>
+          <td>${jy.equip}/100 <div class="progress-bar"><div class="fill ${jy.equip>50?'good':'warn'}" style="width:${jy.equip}%"></div></div></td>
+          <td>${jy.morale}/100 <div class="progress-bar"><div class="fill ${jy.morale>50?'good':'warn'}" style="width:${jy.morale}%"></div></div></td>
+          <td>${getProvince(jy.location)?.name||'京师'}</td>
+          <td><button class="btn btn-sm" onclick="showMoveArmy()">调动</button> <button class="btn btn-sm btn-gold" onclick="showTrainArmy()">操练</button></td>
+        </tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header">九边重镇 <span class="sub">边境驻防</span></div>
+      <table>
+        <tr><th>军镇</th><th>兵力</th><th>操练</th><th>装备</th><th>士气</th><th>将领</th></tr>
+        ${jb.map(j=>`<tr>
+          <td class="text-gold">${j.name}</td>
+          <td>${j.troops.toLocaleString()}</td>
+          <td>${j.training}/100 <div class="progress-bar"><div class="fill blue" style="width:${j.training}%"></div></div></td>
+          <td>${j.equip}/100 <div class="progress-bar"><div class="fill ${j.equip>50?'good':'warn'}" style="width:${j.equip}%"></div></div></td>
+          <td>${j.morale}/100 <div class="progress-bar"><div class="fill ${j.morale>50?'good':'warn'}" style="width:${j.morale}%"></div></div></td>
+          <td>${j.general?j.general:'—'}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header">卫所 <span class="sub">地方驻军</span></div>
+      <table>
+        <tr><th>省份</th><th>兵力</th><th>操练</th><th>装备</th><th>士气</th></tr>
+        ${ws.map(w=>{
+          let p = getProvince(w.province);
+          return `<tr><td>${p?p.name:w.province}</td><td>${w.troops.toLocaleString()}</td><td>${w.training}</td><td>${w.equip}</td><td>${w.morale}</td></tr>`;
+        }).join('')}
+      </table>
+    </div>
+  `;
+}
+
+function showMoveArmy(){
+  let opts = G.provinces.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  showModal('调动京营',`
+    <div>选择目标驻地：</div>
+    <select id="move-target" style="width:100%;padding:6px;background:var(--bg-card);color:var(--text);border:1px solid var(--border);margin:8px 0">${opts}</select>
+    <div class="text-dim">调动消耗粮草和行政点</div>
+  `,[
+    {text:'调动',cls:'btn-gold',fn:()=>{
+      let target = document.getElementById('move-target').value;
+      G.military.jingying.location = target;
+      G.adminPoints = Math.max(0, G.adminPoints - 5);
+      let p = getProvince(target);
+      addLog(`京营调驻${p?p.name:target}`,'info');
+      addNotif(`🚩 京营调驻${p?p.name:target}`,'info');
+      closeModal();renderPanels();
+    }},
+    {text:'取消',cls:'',fn:closeModal}
+  ]);
+}
+
+function showTrainArmy(){
+  showModal('操练京营',`
+    <div>投入资金进行操练：</div>
+    <div class="mt-8">
+      <button class="btn btn-sm" onclick="doTrain(5000,5)">投入5000两（操练+5）</button>
+      <button class="btn btn-sm" onclick="doTrain(10000,12)">投入10000两（操练+12）</button>
+      <button class="btn btn-sm" onclick="doTrain(20000,25)">投入20000两（操练+25）</button>
+    </div>
+  `,[{text:'关闭',cls:'',fn:closeModal}]);
+}
+
+function doTrain(cost, gain){
+  if(G.treasury<cost){addNotif('国库不足！','bad');return}
+  G.treasury-=cost;
+  G.military.jingying.training = Math.min(100, G.military.jingying.training + gain);
+  addLog(`京营操练+${gain}，耗银${cost}两`,'good');
+  addNotif(`⚔️ 京营操练提升`,'good');
+  closeModal();renderPanels();
+}
+
+// ========== ECONOMY ==========
+function renderEconomy(){
+  let el = document.getElementById('panel-economy');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">国库收支 <span class="sub">本年结算</span></div>
+      <table>
+        <tr><td>税收</td><td class="text-green">+${(G.taxIncome||0).toLocaleString()}两</td></tr>
+        <tr><td>漕运</td><td class="text-green">+${(G.canalIncome||0).toLocaleString()}两</td></tr>
+        <tr><td>朝贡</td><td class="text-green">+${(G.tributeIncome||0).toLocaleString()}两</td></tr>
+        <tr><td>军费</td><td class="text-red">-${(G.militaryCost||0).toLocaleString()}两</td></tr>
+        <tr><td>俸禄</td><td class="text-red">-${(G.officials.filter(o=>!o.empty).length*200).toLocaleString()}两</td></tr>
+        <tr><td>建筑维护</td><td class="text-red">-${G.provinces.reduce((s,p)=>s+p.buildings.farm*100+p.buildings.market*150,0).toLocaleString()}两</td></tr>
+        <tr><td style="font-weight:bold">结余</td><td style="font-weight:bold" class="${G.treasury>0?'text-green':'text-red'}">${G.treasury.toLocaleString()}两</td></tr>
+      </table>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">市舶司（股市）</div>
+        <div style="max-height:300px;overflow-y:auto">
+          <table>
+            <tr><th>公司</th><th>板块</th><th>股价</th><th>操作</th></tr>
+            ${G.companies.slice(0,15).map(c=>`<tr>
+              <td>${c.name}</td>
+              <td class="text-dim">${c.sector}</td>
+              <td class="text-gold">${c.price}文</td>
+              <td><button class="btn btn-sm" onclick="buyStock('${c.id}')">买入</button></td>
+            </tr>`).join('')}
+          </table>
+        </div>
+        <div class="mt-8 text-center"><button class="btn btn-sm" onclick="showFullStock()">查看全部35家公司 →</button></div>
+      </div>
+      <div class="card">
+        <div class="card-header">期货市场</div>
+        <table>
+          <tr><th>品种</th><th>现价</th><th>操作</th></tr>
+          ${['grain','iron','salt','horse','silk'].map(k=>{
+            let names={grain:'粮食',iron:'铁矿',salt:'盐',horse:'战马',silk:'丝绸'};
+            return `<tr><td>${names[k]}</td><td class="text-gold">${G.futuresPrices?G.futuresPrices[k]:50}文</td><td><button class="btn btn-sm" onclick="buyFuture('${k}')">买入</button></td></tr>`;
+          }).join('')}
+        </table>
+        <div class="section-title mt-8">银行</div>
+        <table>
+          <tr><td>存款</td><td class="text-green">${G.playerBank.deposit.toLocaleString()}两</td><td>利率</td><td class="text-gold">${(G.depositRate*100).toFixed(1)}%</td></tr>
+          <tr><td>贷款</td><td class="text-red">${G.playerBank.loan.toLocaleString()}两</td><td>利率</td><td class="text-gold">${(G.interestRate*100).toFixed(1)}%</td></tr>
+          <tr><td colspan="4" class="text-center">
+            <button class="btn btn-sm" onclick="bankDeposit()">存款</button>
+            <button class="btn btn-sm" onclick="bankWithdraw()">取款</button>
+            <button class="btn btn-sm" onclick="bankLoan()">贷款</button>
+          </td></tr>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function showFullStock(){
+  let rows = G.companies.map(c=>`<tr><td>${c.name}</td><td class="text-dim">${c.sector}</td><td class="text-gold">${c.price}文</td><td><button class="btn btn-sm" onclick="buyStock('${c.id}')">买入</button></td></tr>`).join('');
+  showModal('市舶司（全部35家公司）',`<table><tr><th>公司</th><th>板块</th><th>股价</th><th>操作</th></tr>${rows}</table>`,[{text:'关闭',cls:'',fn:closeModal}]);
+}
+
+function buyStock(id){
+  let c = G.companies.find(x=>x.id===id);
+  if(!c)return;
+  showModal(`买入 ${c.name}`,`
+    <div>当前股价：<b class="text-gold">${c.price}文</b></div>
+    <div class="mt-8">可用资金：<b>${G.treasury.toLocaleString()}两</b></div>
+    <div class="mt-8">输入买入数量（可买最多 ${Math.floor(G.treasury/c.price)} 股）：</div>
+    <input id="stock-qty" type="number" min="1" max="${Math.floor(G.treasury/c.price)}" value="100" style="width:100%;padding:6px;margin:8px 0;background:var(--bg-card);color:var(--text);border:1px solid var(--border)">
+    <div>总价：<span id="stock-total">0</span>两</div>
+  `,[
+    {text:'确认买入',cls:'btn-gold',fn:()=>{
+      let qty = parseInt(document.getElementById('stock-qty').value)||0;
+      let cost = qty * c.price;
+      if(cost<=0||cost>G.treasury){addNotif('金额不足','bad');return}
+      G.treasury-=cost;
+      if(!G.playersStocks[id])G.playersStocks[id]=0;
+      G.playersStocks[id]+=qty;
+      addLog(`买入${c.name}${qty}股，耗银${cost}两`,'good');
+      addNotif(`📈 买入${c.name}${qty}股`,'good');
+      closeModal();renderPanels();
+    }},
+    {text:'取消',cls:'',fn:closeModal}
+  ]);
+  // 实时计算
+  setTimeout(()=>{
+    let inp = document.getElementById('stock-qty');
+    let tot = document.getElementById('stock-total');
+    if(inp&&tot){
+      inp.addEventListener('input',()=>{
+        let q = parseInt(inp.value)||0;
+        tot.textContent=(q*c.price).toLocaleString();
+      });
+      inp.dispatchEvent(new Event('input'));
+    }
+  },50);
+}
+
+function buyFuture(key){
+  let names={grain:'粮食',iron:'铁矿',salt:'盐',horse:'战马',silk:'丝绸'};
+  let price = G.futuresPrices?G.futuresPrices[key]:50;
+  showModal(`买入${names[key]}期货`,`
+    <div>当前价格：<b class="text-gold">${price}文/单位</b></div>
+    <div class="mt-8">可用资金：<b>${G.treasury.toLocaleString()}两</b></div>
+    <div class="mt-8">输入买入数量：</div>
+    <input id="future-qty" type="number" min="1" max="${Math.floor(G.treasury/price)}" value="100" style="width:100%;padding:6px;margin:8px 0;background:var(--bg-card);color:var(--text);border:1px solid var(--border)">
+  `,[
+    {text:'买入',cls:'btn-gold',fn:()=>{
+      let qty = parseInt(document.getElementById('future-qty').value)||0;
+      let cost = qty * price;
+      if(cost<=0||cost>G.treasury){addNotif('金额不足','bad');return}
+      G.treasury-=cost;
+      if(!G.playersFutures[key])G.playersFutures[key]={qty:0,cost:0};
+      G.playersFutures[key].qty+=qty;
+      G.playersFutures[key].cost+=cost;
+      addLog(`买入${names[key]}期货${qty}单位`,'good');
+      addNotif(`📊 买入${names[key]}期货`,'good');
+      closeModal();renderPanels();
+    }},
+    {text:'取消',cls:'',fn:closeModal}
+  ]);
+}
+
+function bankDeposit(){
+  showModal('存款',`
+    <div>当前存款：<b class="text-green">${G.playerBank.deposit.toLocaleString()}两</b></div>
+    <div>年利率：<b class="text-gold">${(G.depositRate*100).toFixed(1)}%</b></div>
+    <div class="mt-8">输入存款金额（最多 ${G.treasury.toLocaleString()} 两）：</div>
+    <input id="deposit-amt" type="number" min="1" max="${G.treasury}" value="1000" style="width:100%;padding:6px;margin:8px 0;background:var(--bg-card);color:var(--text);border:1px solid var(--border)">
+  `,[
+    {text:'存款',cls:'btn-gold',fn:()=>{
+      let amt = parseInt(document.getElementById('deposit-amt').value)||0;
+      if(amt<=0||amt>G.treasury){addNotif('金额不足','bad');return}
+      G.treasury-=amt;
+      G.playerBank.deposit+=amt;
+      addLog(`存入银行${amt}两`,'good');
+      closeModal();renderPanels();
+    }},
+    {text:'取消',cls:'',fn:closeModal}
+  ]);
+}
+
+function bankWithdraw(){
+  showModal('取款',`
+    <div>当前存款：<b class="text-green">${G.playerBank.deposit.toLocaleString()}两</b></div>
+    <div class="mt-8">输入取款金额（最多 ${G.playerBank.deposit.toLocaleString()} 两）：</div>
+    <input id="withdraw-amt" type="number" min="1" max="${G.playerBank.deposit}" value="1000" style="width:100%;padding:6px;margin:8px 0;background:var(--bg-card);color:var(--text);border:1px solid var(--border)">
+  `,[
+    {text:'取款',cls:'btn-gold',fn:()=>{
+      let amt = parseInt(document.getElementById('withdraw-amt').value)||0;
+      if(amt<=0||amt>G.playerBank.deposit){addNotif('余额不足','bad');return}
+      G.treasury+=amt;
+      G.playerBank.deposit-=amt;
+      addLog(`从银行取款${amt}两`,'info');
+      closeModal();renderPanels();
+    }},
+    {text:'取消',cls:'',fn:closeModal}
+  ]);
+}
+
+function bankLoan(){
+  showModal('贷款',`
+    <div>当前贷款：<b class="text-red">${G.playerBank.loan.toLocaleString()}两</b></div>
+    <div>年利率：<b class="text-gold">${(G.interestRate*100).toFixed(1)}%</b></div>
+    <div class="mt-8 text-dim">贷款上限为年度税收的2倍</div>
+    <div class="mt-8">输入贷款金额：</div>
+    <input id="loan-amt" type="number" min="1" max="${(G.taxIncome||5000)*2}" value="1000" style="width:100%;padding:6px;margin:8px 0;background:var(--bg-card);color:var(--text);border:1px solid var(--border)">
+  `,[
+    {text:'贷款',cls:'btn-gold',fn:()=>{
+      let amt = parseInt(document.getElementById('loan-amt').value)||0;
+      let maxLoan = (G.taxIncome||5000)*2 - G.playerBank.loan;
+      if(amt<=0||amt>maxLoan){addNotif('贷款额度过限','bad');return}
+      G.treasury+=amt;
+      G.playerBank.loan+=amt;
+      addLog(`从银行贷款${amt}两`,'info');
+      closeModal();renderPanels();
+    }},
+    {text:'取消',cls:'',fn:closeModal}
+  ]);
+}
+
+// ========== DIPLOMACY ==========
+function renderDiplomacy(){
+  let el = document.getElementById('panel-diplomacy');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">列国关系</div>
+      <table>
+        <tr><th>国家</th><th>类型</th><th>关系</th><th>贸易</th><th>朝贡</th><th>军力</th><th>操作</th></tr>
+        ${G.nations.map(n=>`<tr>
+          <td class="text-gold">${n.name}</td>
+          <td class="text-dim">${n.type}</td>
+          <td><span class="${n.relation>30?'text-green':n.relation<-20?'text-red':'text-gold'}">${n.relation}</span></td>
+          <td>${n.trade?'<span class="text-green">✓</span>':'<span class="text-dim">✗</span>'}</td>
+          <td>${n.tribute?'<span class="text-green">✓</span>':'<span class="text-dim">✗</span>'}</td>
+          <td>${(n.army/1000).toFixed(0)}k</td>
+          <td><button class="btn btn-sm" onclick="diplomacyAction('${n.id}')">交涉</button></td>
+        </tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header">战争名分 <span class="sub">可用名分决定宣战合法性</span></div>
+      <div class="flex flex-wrap" style="gap:4px">
+        ${WAR_JUSTIFICATIONS.map(j=>{
+          let avail = G.warJustifications.includes(j.id);
+          return `<span class="btn btn-sm" style="cursor:default;${avail?'background:var(--bg-hover);border-color:var(--war)':'opacity:0.4'}">${j.name}${avail?' ✓':''}</span>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function diplomacyAction(nid){
+  let n = G.nations.find(x=>x.id===nid);
+  if(!n)return;
+  showModal(n.name,`
+    <div class="grid-2">
+      <div><b>类型：</b>${n.type}</div>
+      <div><b>关系：</b><span class="${n.relation>30?'text-green':n.relation<-20?'text-red':'text-gold'}">${n.relation}</span></div>
+      <div><b>军力：</b>${(n.army/1000).toFixed(0)}k</div>
+      <div><b>贸易：</b>${n.trade?'<span class="text-green">已开通</span>':'<span class="text-dim">未开通</span>'}</div>
+    </div>
+    <div class="mt-8">${n.desc}</div>
+    <div class="section-title">外交行动</div>
+    <div class="flex flex-wrap gap-4">
+      <button class="btn btn-sm" onclick="doDiplomacy('${n.id}','improve')">改善关系（耗10行政点）</button>
+      <button class="btn btn-sm" onclick="doDiplomacy('${n.id}','trade')">${n.trade?'关闭贸易':'开通贸易'}</button>
+      ${n.tribute?`<button class="btn btn-sm" onclick="doDiplomacy('${n.id}','demand')">索要进贡</button>`:''}
+      <button class="btn btn-sm btn-red" onclick="doDiplomacy('${n.id}','war')">宣战</button>
+    </div>
+  `,[{text:'关闭',cls:'',fn:closeModal}]);
+}
+
+function doDiplomacy(nid, action){
+  let n = G.nations.find(x=>x.id===nid);
+  if(!n)return;
+  switch(action){
+    case 'improve':
+      if(G.adminPoints<10){addNotif('行政点不足','bad');return}
+      G.adminPoints-=10;
+      n.relation=Math.min(100,n.relation+10+Math.floor(Math.random()*10));
+      addLog(`遣使改善与${n.name}关系`,'good');
+      addNotif(`🤝 与${n.name}关系改善`,'good');
+      break;
+    case 'trade':
+      n.trade=!n.trade;
+      addLog(`${n.trade?'开通':'关闭'}与${n.name}的贸易`,'info');
+      break;
+    case 'demand':
+      if(n.relation<30){addNotif('关系不足，对方拒绝朝贡','bad');break}
+      let amt=1000+Math.floor(Math.random()*2000);
+      G.treasury+=amt;
+      n.relation=Math.max(-100,n.relation-10);
+      addLog(`${n.name}进贡${amt}两`,'good');
+      addNotif(`🎁 ${n.name}进贡${amt}两`,'good');
+      break;
+    case 'war':
+      if(!G.warJustifications.length){addNotif('无名分，宣战将损天命','bad');break}
+      G.tianming=Math.max(0,G.tianming-5);
+      n.relation=-100;
+      G.underAttack=true;
+      addLog(`对${n.name}宣战！`,'war');
+      addNotif(`⚔️ 对${n.name}宣战！`,'war');
+      break;
+  }
+  closeModal();
+  renderPanels();
+}
+
+// ========== SCHOOLS ==========
+function renderSchools(){
+  let el = document.getElementById('panel-schools');
+  let active = getActiveSchool();
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">百家争鸣 <span class="sub">当前主流：${active?active.name:'无'}</span></div>
+      <div class="grid-3">
+        ${G.schools.map(s=>{
+          let isActive = s.id===G.activeSchool;
+          let infl = G.schoolInfluence[s.id]||0;
+          return `<div class="card" style="border-color:${isActive?'var(--gold)':'var(--border)'};cursor:pointer" onclick="switchSchool('${s.id}')">
+            <div class="flex" style="justify-content:space-between;align-items:center">
+              <b class="${isActive?'text-gold':'text-bright'}">${s.name}</b>
+              ${isActive?'<span class="btn btn-sm btn-gold" style="cursor:default">主流</span>':''}
+            </div>
+            <div class="text-dim" style="font-size:11px;margin:4px 0">${s.desc}</div>
+            <div class="text-dim" style="font-size:11px">${s.effect}</div>
+            <div class="mt-8">
+              <div class="flex" style="justify-content:space-between">
+                <span class="text-dim">影响力</span>
+                <span>${infl}%</span>
+              </div>
+              <div class="progress-bar"><div class="fill blue" style="width:${infl}%"></div></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="mt-8 text-dim text-center">点击学派切换主流（消耗30行政点）</div>
+    </div>
+  `;
+}
+
+function switchSchool(id){
+  if(id===G.activeSchool){addNotif('已是主流学派','info');return}
+  if(G.adminPoints<30){addNotif('行政点不足（需30点）','bad');return}
+  G.adminPoints-=30;
+  G.activeSchool = id;
+  let s = getSchool(id);
+  addLog(`主流学派变更为${s.name}`,'good');
+  addNotif(`📖 主流学派：${s.name}`,'good');
+  renderPanels();
+}
+
+// ========== EXAM ==========
+function renderExam(){
+  let el = document.getElementById('panel-exam');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">科举取士 <span class="sub">人才池：${G.examPool.length}人</span></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header" style="font-size:12px">童试 → 秀才</div>
+          <div class="text-dim">基础功名，可任县丞</div>
+          <button class="btn btn-sm mt-8 ${G.treasury<500?'':'btn-gold'}" ${G.treasury<500?'disabled':''} onclick="holdExam('xiucai',500)">举行童试（500两）</button>
+        </div>
+        <div class="card">
+          <div class="card-header" style="font-size:12px">乡试 → 举人</div>
+          <div class="text-dim">可任知府/知县</div>
+          <button class="btn btn-sm mt-8 ${G.treasury<1000?'':'btn-gold'}" ${G.treasury<1000?'disabled':''} onclick="holdExam('juren',1000)">举行乡试（1000两）</button>
+        </div>
+        <div class="card">
+          <div class="card-header" style="font-size:12px">会试 → 贡士</div>
+          <div class="text-dim">可任六部主事/御史</div>
+          <button class="btn btn-sm mt-8 ${G.treasury<2000?'':'btn-gold'}" ${G.treasury<2000?'disabled':''} onclick="holdExam('gongshi',2000)">举行会试（2000两）</button>
+        </div>
+        <div class="card">
+          <div class="card-header" style="font-size:12px">殿试 → 进士</div>
+          <div class="text-dim">一甲入翰林，可入内阁</div>
+          <button class="btn btn-sm mt-8 ${G.treasury<3000?'':'btn-gold'}" ${G.treasury<3000?'disabled':''} onclick="holdExam('jinshi',3000)">举行殿试（3000两）</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">人才池</div>
+      ${G.examPool.length?`<table><tr><th>姓名</th><th>功名</th><th>能力</th><th>年龄</th><th>派系</th></tr>${G.examPool.slice(0,20).map(c=>`<tr><td>${c.name}</td><td class="text-gold">${c.level}</td><td>${c.ability}</td><td>${c.age}</td><td>${c.faction||'无'}</td></tr>`).join('')}</table>`:'<div class="text-dim">人才池为空，请举行科举</div>'}
+    </div>
+  `;
+}
+
+function holdExam(level, cost){
+  if(G.treasury<cost){addNotif('国库不足','bad');return}
+  G.treasury-=cost;
+  let names = ['沈炼','杨涟','左光斗','魏大中','周顺昌','黄尊素','袁化中','顾大章','王之寀','陆梦龙',
+    '李三才','邹元标','赵南星','孙慎行','高攀龙','刘宗周','黄道周','倪元璐','刘理顺','范景文',
+    '史可法','瞿式耜','张煌言','郑成功','李定国','孙可望','刘文秀','艾能奇','白文选','李来亨'];
+  let count = level==='xiucai'?10:level==='juren'?6:level==='gongshi'?3:2;
+  let abilityBase = level==='xiucai'?30:level==='juren'?45:level==='gongshi'?60:75;
+  for(let i=0;i<count;i++){
+    let n = names[Math.floor(Math.random()*names.length)];
+    G.examPool.push({
+      id:'exam_'+Date.now()+'_'+i,
+      name:n+(['','','','','','','·','·','·'][Math.floor(Math.random()*10)]),
+      age:25+Math.floor(Math.random()*15),
+      ability:abilityBase+Math.floor(Math.random()*20),
+      level:level==='xiucai'?'秀才':level==='juren'?'举人':level==='gongshi'?'贡士':'进士',
+      faction:['东林','浙党','楚党','齐党','宣党','无'][Math.floor(Math.random()*6)]
+    });
+  }
+  let levelNames = {xiucai:'童试',juren:'乡试',gongshi:'会试',jinshi:'殿试'};
+  addLog(`${levelNames[level]}举行，取士${count}人`,'good');
+  addNotif(`🎓 ${levelNames[level]}举行，${count}人及第`,'good');
+  renderPanels();
+}
+
+// ========== EVENTS ==========
+function renderEvents(){
+  let el = document.getElementById('panel-events');
+  let recent = G.log.filter(l=>l.type==='bad'||l.type==='good'||l.type==='event'||l.type==='war').slice(0,20);
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">事件日志 <span class="sub">近期事件</span></div>
+      <div style="max-height:400px;overflow-y:auto">
+        ${recent.length?recent.map(l=>`<div class="log-entry log-${l.type}">[${l.era}${l.eraYear}年] ${l.msg}</div>`).join(''):'<div class="text-dim">暂无事件记录</div>'}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">事件权重 <span class="sub">当前状态可触发的事件</span></div>
+      ${EVENTS_POOL.map(e=>{
+        let w = e.weight(G);
+        return `<div class="flex" style="justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(30,42,74,0.3)">
+          <span>${e.name}</span>
+          <span class="${w>0?'text-gold':'text-dim'}">权重：${w.toFixed(1)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ========== WONDERS ==========
+function renderWonders(){
+  let el = document.getElementById('panel-wonders');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">奇观营造 <span class="sub">大兴土木，功在千秋</span></div>
+      <div class="grid-2">
+        ${G.wonders.map(w=>`
+          <div class="card" style="border-color:${w.done?'var(--gold)':'var(--border)'}">
+            <div class="flex" style="justify-content:space-between;align-items:center">
+              <b class="${w.done?'text-gold':'text-bright'}">${w.name}</b>
+              ${w.done?'<span class="btn btn-sm btn-gold" style="cursor:default">✓ 已竣工</span>':''}
+            </div>
+            <div class="text-dim" style="font-size:11px;margin:4px 0">${w.desc}</div>
+            <div class="text-dim" style="font-size:11px">${w.effect}</div>
+            ${!w.done?`
+              <div class="mt-8">
+                <div class="flex" style="justify-content:space-between">
+                  <span>进度：${w.stage}/${w.stages.length-1}</span>
+                  <span class="text-gold">${Math.floor(w.progress/w.cost*100)}%</span>
+                </div>
+                <div class="progress-bar"><div class="fill gold" style="width:${w.progress/w.cost*100}%"></div></div>
+                <div class="text-dim" style="font-size:11px">当前阶段：${w.stages[w.stage]}</div>
+                <div class="mt-8 flex gap-4">
+                  <button class="btn btn-sm" onclick="investWonder('${w.id}',5000)">投入5000两</button>
+                  <button class="btn btn-sm" onclick="investWonder('${w.id}',10000)">投入10000两</button>
+                  <button class="btn btn-sm" onclick="investWonder('${w.id}',50000)">投入50000两</button>
+                </div>
+              </div>
+            `:''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function investWonder(id, amt){
+  if(G.treasury<amt){addNotif('国库不足','bad');return}
+  G.treasury-=amt;
+  let w = G.wonders.find(x=>x.id===id);
+  if(w){
+    w.progress+=amt;
+    w.stageProgress = (w.stageProgress||0) + amt;
+    // 阶段检查
+    let stageCost = w.cost * (w.stage+1) / w.stages.length;
+    if(w.stageProgress >= stageCost && w.stage < w.stages.length-1){
+      w.stage++;
+      w.stageProgress = 0;
+      addLog(`${w.name}进入${w.stages[w.stage]}阶段`,'good');
+      addNotif(`🏗️ ${w.name}进度：${w.stages[w.stage]}`,'good');
+    }
+    if(w.stage >= w.stages.length-1){
+      w.done = true;
+      addLog(`${w.name}竣工！`,'good');
+      addNotif(`✨ ${w.name}竣工！`,'good');
+    }
+  }
+  addLog(`投入${amt}两用于${w?w.name:'奇观建设'}`,'info');
+  renderPanels();
+}
+
+// ========== LOG ==========
+function renderLog(){
+  let el = document.getElementById('panel-log');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">起居注 <span class="sub">共${G.log.length}条记录</span></div>
+      <div id="log-panel">
+        ${G.log.map(l=>`<div class="log-entry log-${l.type}">[${l.era}${l.eraYear}年] ${l.msg}</div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============================
+// 6.  MODAL SYSTEM
+// ============================
+
+function showModal(title, body, buttons){
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  let footer = document.getElementById('modal-footer');
+  footer.innerHTML = '';
+  (buttons||[]).forEach(b=>{
+    let btn = document.createElement('button');
+    btn.className = 'btn ' + (b.cls||'');
+    btn.textContent = b.text;
+    btn.onclick = b.fn;
+    footer.appendChild(btn);
+  });
+  if(!buttons||!buttons.length){
+    let btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = '关闭';
+    btn.onclick = closeModal;
+    footer.appendChild(btn);
+  }
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// ============================
+// 7.  SAVE / LOAD
+// ============================
+
+function saveGame(){
+  try{
+    localStorage.setItem('tianming_save', JSON.stringify(G));
+    addNotif('💾 存档成功','good');
+  }catch(e){
+    addNotif('存档失败','bad');
+  }
+}
+
+function loadGame(){
+  try{
+    let data = localStorage.getItem('tianming_save');
+    if(data){
+      G = JSON.parse(data);
+      addNotif('📂 读档成功','good');
+      updateAll();
+    }else{
+      addNotif('无存档数据','bad');
+    }
+  }catch(e){
+    addNotif('读档失败','bad');
+  }
+}
+
+function exportSave(){
+  try{
+    let data = JSON.stringify(G);
+    let blob = new Blob([data], {type:'application/json'});
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `天命国策_${G.era}${G.eraYear}年.json`;
+    a.click();
+    addNotif('📤 导出成功','good');
+  }catch(e){
+    addNotif('导出失败','bad');
+  }
+}
+
+// ============================
+// 8.  INIT
+// ============================
+
+// 自动存档间隔
+setInterval(()=>{
+  try{
+    localStorage.setItem('tianming_save', JSON.stringify(G));
+  }catch(e){}
+}, 60000); // 每分钟自动存档
+
+// 检查是否有存档
+let saved = localStorage.getItem('tianming_save');
+if(saved){
+  try{
+    G = JSON.parse(saved);
+    addLog('读取存档','info');
+  }catch(e){}
+}
+
+updateAll();
+addNotif('🏛 天命·国策 已加载','info');
+addNotif('📜 点击「上朝进奏」开始年度推演','info');
+</script>
+</body>
+</html>

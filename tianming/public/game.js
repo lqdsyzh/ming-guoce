@@ -1850,6 +1850,38 @@ function exportSave(){
   URL.revokeObjectURL(a.href);
 }
 
+// 分享战绩到社交平台
+function shareAchievement(){
+  if(!G){ addNotif('请先开始游戏','bad'); return; }
+  const txt = `【天命·国策】${G.era}${G.eraYear}年朝政报告
+👑 帝号：${G.era}
+📅 在位：${G.eraYear}年
+☀ 天命：${Math.round(G.tianming)}/100
+🛡 稳定：${Math.round(G.stability)}/100
+💰 国库：${Math.round(G.treasury)}万两
+🌾 粮储：${Math.round(G.grain)}万石
+👥 人口：${Math.round(G.population)}万
+⚔ 军力：${Math.round(G.military)}万
+🏗 奇观：${(G.wonders||[]).length}座
+
+你也能开创大明王朝 → ${location.origin}`;
+
+  // 尝试 Web Share API（移动端）
+  if(navigator.share){
+    navigator.share({ title:'天命·国策 战绩', text:txt, url:location.origin }).catch(()=>{});
+  } else {
+    // 桌面端：复制到剪贴板 + 弹窗
+    navigator.clipboard.writeText(txt).then(()=>{
+      addNotif('📋 战绩已复制到剪贴板，粘贴到任意社交平台即可分享','good');
+    }).catch(()=>{
+      // 降级：弹窗展示
+      showModal('📢 分享战绩', `<textarea style="width:100%;height:200px;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:10px;font-size:12px" readonly onclick="this.select()">${esc(txt)}</textarea>
+      <div class="text-dim mt-8" style="font-size:11px">复制以上文字，发到微信/QQ/微博/贴吧即可分享你的王朝</div>`,
+      [{text:'关闭',cls:'',fn:closeModal}]);
+    });
+  }
+}
+
 // 新开局（登录后若无云档则自动创建）
 function startNewGame(){
   G = createGame();

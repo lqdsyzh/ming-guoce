@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: tianming-game
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production

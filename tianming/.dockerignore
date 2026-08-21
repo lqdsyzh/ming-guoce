@@ -1,0 +1,8 @@
+node_modules
+data.db
+data.db-journal
+uploads/*
+*.log
+.git
+e2e-*.py
+audit-*.js

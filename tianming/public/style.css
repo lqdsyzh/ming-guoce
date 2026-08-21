@@ -214,6 +214,8 @@ tr.clickable{cursor:pointer}
 .notif-item{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:6px;cursor:pointer}
 .notif-item.unread{border-left:3px solid var(--accent-gold)}
 .notif-item:hover{border-color:var(--accent-gold)}
+.btn-share{background:linear-gradient(135deg,#1a1a3e,#2a2a5e);color:#d4a644;border:1px solid rgba(212,166,68,0.3)}
+.btn-share:hover{border-color:var(--accent-gold);box-shadow:0 0 10px rgba(212,166,68,0.2)}
 
 @media(max-width:900px){
   #sidebar{width:150px}

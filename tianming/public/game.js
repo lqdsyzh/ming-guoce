@@ -192,6 +192,22 @@ const WAR_JUSTIFICATIONS = [
 ];
 
 // ============================
+// 1.5 创意系统：内廷 / 钦天监 / 锦衣卫
+// ============================
+const HAREM_SURNAMES = ['沈','王','李','赵','陈','郑','孙','周','吴','杨','徐','袁'];
+const PRINCE_TITLES = ['秦王','晋王','燕王','周王','楚王','齐王','潭王','赵王','鲁王','蜀王'];
+const STAR_OMENS = [
+  {id:'yinghuo',name:'荧惑守心',type:'灾异',desc:'荧惑守心，人主忧危，宜修德省刑',loss:{tianming:6,stability:4}},
+  {id:'taibai',name:'太白经天',type:'灾异',desc:'太白经天，天下革政，兵戈之象',loss:{stability:5,tianming:2}},
+  {id:'yueyan',name:'月掩昴星',type:'灾异',desc:'月掩昴星，边警急，胡兵将动',loss:{stability:3,tianming:2}},
+  {id:'huixing',name:'彗星扫紫微',type:'灾异',desc:'彗出紫微，除旧布新之象',loss:{tianming:5,stability:3}},
+  {id:'wuxing',name:'五星连珠',type:'祥瑞',desc:'五星连珠，圣主出世，天命所归',gain:{tianming:8,stability:2}},
+  {id:'huangheqing',name:'黄河清',type:'祥瑞',desc:'黄河水清，圣人在位，海晏河清',gain:{tianming:6,stability:3}},
+  {id:'qilin',name:'麒麟现世',type:'祥瑞',desc:'麒麟现于郊野，仁政感天',gain:{tianming:5,stability:2}},
+  {id:'bailu',name:'白鹿入苑',type:'祥瑞',desc:'白鹿入苑，寿昌之兆',gain:{tianming:3,stability:1}}
+];
+
+// ============================
 // 2. 游戏状态创建
 // ============================
 function createGame(){
@@ -211,6 +227,12 @@ function createGame(){
     activeSchool:'rujia', schoolInfluence:{},
     impeachCases:[], battles:[], currentEvents:[],
     warJustifications:[], lastYearEvent:null,
+    // 内廷系统
+    harem:[], princes:[], eunuchPower:10, eunuchName:'王安',
+    // 钦天监系统
+    omens:[], lastOmen:null, atonementYear:0,
+    // 锦衣卫系统
+    spyPower:30, spyMissions:[],
     playersStocks:{}, playersFutures:{},
     playerBank:{deposit:0,loan:0},
     futuresPrices:{grain:50,iron:40,salt:60,horse:100,silk:80},
@@ -293,6 +315,17 @@ function createGame(){
   SCHOOLS_DATA.forEach(s=>{ g.schoolInfluence[s.id] = s.id==='rujia'?30:8+Math.floor(Math.random()*5); });
 
   g.wonders = WONDERS_DATA.map(w=>({...w,done:false,progress:0,stage:0,stageProgress:0}));
+
+  // 内廷初始：皇后+二妃+二皇子
+  g.harem = [
+    {id:'h_q',name:'马氏',rank:'皇后',favor:80,clan:'寒门',son:null},
+    {id:'h_1',name:HAREM_SURNAMES[0]+'氏',rank:'贵妃',favor:60,clan:'勋贵',son:null},
+    {id:'h_2',name:HAREM_SURNAMES[1]+'氏',rank:'妃',favor:45,clan:'文官',son:null}
+  ];
+  g.princes = [
+    {id:'p_1',name:'朱标',title:'皇太子',age:16,mother:'马氏',ambition:20,ability:70,status:'在朝'},
+    {id:'p_2',name:'朱樉',title:'秦王',age:12,mother:'马氏',ambition:55,ability:45,status:'在朝'}
+  ];
 
   g.addLog('太祖高皇帝开国，定都应天府，年号洪武','event');
   return g;
@@ -550,6 +583,78 @@ function annualReview(){
     + (hasOfficial('minister_libu')?1:0);
   G.tianming = Math.max(0, Math.min(100, G.tianming + tmDelta));
 
+  // 18.5 内廷年度联动：宦官坐大 / 外戚干政 / 皇子夺嫡
+  G.eunuchPower = Math.min(100, G.eunuchPower + 3);
+  if(G.eunuchPower > 70){
+    G.stability = Math.max(0, G.stability - 2);
+    G.addLog(`司礼监${G.eunuchName}权势日盛，干预朝政，稳定-2`,'bad');
+  }
+  let strongClan = G.harem.filter(h=>h.favor>70 && h.clan!=='寒门');
+  if(strongClan.length && Math.random()<0.35){
+    let h = strongClan[0];
+    G.stability = Math.max(0, G.stability - 2);
+    G.addLog(`${h.rank}${h.name}（${h.clan}出身）家族请托干政，稳定-2`,'bad');
+    addNotif(`🏮 外戚干政：${h.name}`,'bad');
+  }
+  let adultPrinces = G.princes.filter(p=>p.age>=15 && p.status==='在朝' && p.title!=='皇太子');
+  if(adultPrinces.length>=2 && G.stability<45 && Math.random()<0.3){
+    let p = adultPrinces.sort((a,b)=>b.ambition-a.ambition)[0];
+    G.stability = Math.max(0, G.stability - 6);
+    G.tianming = Math.max(0, G.tianming - 4);
+    G.addLog(`${p.title}${p.name}结交边将，图谋不轨！夺嫡之争起，稳定-6 天命-4`,'bad');
+    addNotif(`⚔ 夺嫡危机：${p.title}${p.name}`,'bad');
+  }
+  G.princes.forEach(p=>p.age++);
+
+  // 18.6 钦天监年度联动：观星得兆
+  if(Math.random()<0.55){
+    let omen = STAR_OMENS[Math.floor(Math.random()*STAR_OMENS.length)];
+    G.lastOmen = {...omen, year:G.year};
+    G.omens.unshift({...omen, year:G.year});
+    if(G.omens.length>20) G.omens.pop();
+    if(omen.type==='灾异'){
+      G.tianming = Math.max(0, G.tianming - (omen.loss.tianming||0));
+      G.stability = Math.max(0, G.stability - (omen.loss.stability||0));
+      G.addLog(`钦天监奏：【${omen.name}】！${omen.desc}。天命-${omen.loss.tianming||0} 稳定-${omen.loss.stability||0}`,'bad');
+      addNotif(`🔭 灾异：${omen.name}`,'bad');
+    } else {
+      G.tianming = Math.min(100, G.tianming + (omen.gain.tianming||0));
+      G.stability = Math.min(100, G.stability + (omen.gain.stability||0));
+      G.addLog(`钦天监奏：【${omen.name}】！${omen.desc}。天命+${omen.gain.tianming||0} 稳定+${omen.gain.stability||0}`,'good');
+      addNotif(`✨ 祥瑞：${omen.name}`,'good');
+    }
+  } else { G.lastOmen = null; }
+
+  // 18.7 锦衣卫年度联动：细作网成长 / 任务结算
+  G.spyPower = Math.min(100, G.spyPower + 2 + (hasOfficial('minister_bing')?1:0));
+  G.spyMissions = (G.spyMissions||[]).filter(m=>{
+    m.turnsLeft--;
+    if(m.turnsLeft>0) return true;
+    let success = Math.random()*100 < G.spyPower;
+    if(m.kind==='spy'){
+      if(success){
+        G.addLog(`锦衣卫细作自【${m.target}】传回军情：其兵力虚实尽在掌握，下次征讨占优`,'good');
+        G.spyIntel = G.spyIntel||{}; G.spyIntel[m.target] = true;
+        addNotif(`🕵 细作得手：${m.target}`,'good');
+      } else {
+        G.addLog(`派往【${m.target}】的细作被擒，邦交受损`,'bad');
+        let n = G.nations.find(x=>x.id===m.target);
+        if(n) n.relation = Math.max(-100, n.relation-15);
+      }
+    } else if(m.kind==='sabotage'){
+      if(success){
+        G.addLog(`锦衣卫在【${m.target}】离间煽动得手，其国生乱`,'good');
+        let n = G.nations.find(x=>x.id===m.target);
+        if(n) n.relation = Math.max(-100, n.relation-10);
+      } else {
+        G.addLog(`离间【${m.target}】之计败露，邦交大损`,'bad');
+        let n = G.nations.find(x=>x.id===m.target);
+        if(n) n.relation = Math.max(-100, n.relation-25);
+      }
+    }
+    return false;
+  });
+
   // 18. 行政点恢复
   let liBonus = hasOfficial('minister_li') ? 5 : 0;
   let fcWonder = G.wonders.find(w=>w.id==='forbidden_city'&&w.done);
@@ -572,11 +677,22 @@ function checkGameOver(){
   if(G.stability<=0) msgs.push('天下大乱，王朝崩解');
   if(G.treasury<-100000) msgs.push('国库枯竭，无力回天');
   if(msgs.length){
+    // 王朝终章写入龙椅排行榜
+    const battlesWon = (G.battles||[]).filter(b=>b.win).length;
+    const wondersDone = (G.wonders||[]).filter(w=>w.done).length;
+    if(typeof api==='function'){
+      api('/api/dynasty/record',{method:'POST',body:JSON.stringify({
+        era:`${G.era}${G.eraYear}年`, turns:G.turn, treasury:Math.round(G.treasury),
+        tianming:Math.round(G.tianming), stability:Math.round(G.stability),
+        battles_won:battlesWon, wonders_done:wondersDone, cause:msgs.join('；')
+      })}).catch(()=>{});
+    }
     setTimeout(()=>{
       showModal('⚠️ 王朝覆灭',
         `<div style="text-align:center;padding:20px">
           <div style="font-size:18px;color:var(--accent-red);margin-bottom:12px">${msgs.join('<br>')}</div>
           <div class="text-dim">国祚 ${G.turn} 年（${G.era}${G.eraYear}年）</div>
+          <div class="text-gold mt-8" style="font-size:12px">📜 王朝终章已写入龙椅排行榜</div>
         </div>`,
         [{text:'重整河山（重新开始）',cls:'btn-gold',fn:()=>{closeModal();G=createGame();updateAll();}}]);
     },500);
@@ -644,7 +760,8 @@ function renderPanels(){
   const id = active.id.replace('panel-','');
   const renderers = {overview:renderOverview,provinces:renderProvinces,officials:renderOfficials,
     military:renderMilitary,economy:renderEconomy,diplomacy:renderDiplomacy,schools:renderSchools,
-    exam:renderExam,events:renderEvents,wonders:renderWonders,impeach:renderImpeach,log:renderLog};
+    exam:renderExam,events:renderEvents,wonders:renderWonders,impeach:renderImpeach,log:renderLog,
+    harem:renderHarem,omen:renderOmen,spy:renderSpy};
   if(renderers[id]) renderers[id]();
 }
 
@@ -1781,6 +1898,189 @@ function judgeCase(cid, verdict){
   renderPanels(); updateTopBar();
 }
 
+// ---------- 内廷 ----------
+function renderHarem(){
+  const el = document.getElementById('panel-harem');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">司礼监 <span class="sub">宦官权势 ${G.eunuchPower}/100</span></div>
+      <div class="text-dim mb-8">宦官权势每年+3，超过70则干政乱朝（稳定-2/年）。可下旨整肃。</div>
+      <div class="mb-8">掌印太监：<span class="text-gold">${G.eunuchName}</span></div>
+      <button class="btn ${G.eunuchPower>70?'btn-gold':''}" onclick="crackdownEunuch()">🗡 整肃宦官（行政点10，权势-25）</button>
+    </div>
+    <div class="card">
+      <div class="card-header">后宫 <span class="sub">${G.harem.length} 人</span></div>
+      <div class="flex gap-4 mb-8">
+        <button class="btn btn-gold" onclick="holdSelection()">🏮 选秀（5000两，纳新妃）</button>
+      </div>
+      <table>
+        <tr><th>封号</th><th>姓名</th><th>恩宠</th><th>出身</th><th>操作</th></tr>
+        ${G.harem.map(h=>`<tr>
+          <td class="text-gold">${h.rank}</td>
+          <td>${h.name}</td>
+          <td><span class="${h.favor>70?'text-red':h.favor>40?'text-gold':'text-dim'}">${h.favor}</span></td>
+          <td class="text-dim">${h.clan}</td>
+          <td><button class="btn btn-sm" onclick="favorConsort('${h.id}')">临幸(+10宠)</button></td>
+        </tr>`).join('')}
+      </table>
+      <div class="text-dim mt-8" style="font-size:11px">恩宠>70且出身勋贵/文官者，家族可能干政。</div>
+    </div>
+    <div class="card">
+      <div class="card-header">皇子 <span class="sub">${G.princes.length} 人</span></div>
+      <table>
+        <tr><th>名</th><th>封号</th><th>年龄</th><th>能力</th><th>野心</th><th>状态</th><th>操作</th></tr>
+        ${G.princes.map(p=>`<tr>
+          <td>${p.name}</td>
+          <td class="text-gold">${p.title}</td>
+          <td>${p.age}</td>
+          <td>${p.ability}</td>
+          <td class="${p.ambition>60?'text-red':'text-dim'}">${p.ambition}</td>
+          <td>${p.status}</td>
+          <td>${p.status==='在朝'&&p.title!=='皇太子'?`<button class="btn btn-sm" onclick="enfeoffPrince('${p.id}')">就藩</button>`:''}</td>
+        </tr>`).join('')}
+      </table>
+      <div class="text-dim mt-8" style="font-size:11px">成年皇子留京且稳定<45时，可能引发夺嫡之争。就藩可消除隐患。</div>
+    </div>`;
+}
+
+function holdSelection(){
+  if(G.treasury<5000){ addNotif('国库不足','bad'); return; }
+  G.treasury -= 5000;
+  const s = HAREM_SURNAMES[Math.floor(Math.random()*HAREM_SURNAMES.length)];
+  const clans = ['寒门','勋贵','文官'];
+  const h = {id:'h_'+Date.now(), name:s+'氏', rank:'妃', favor:30+Math.floor(Math.random()*40),
+    clan:clans[Math.floor(Math.random()*clans.length)], son:null};
+  G.harem.push(h);
+  G.addLog(`选秀入宫：${h.name}（${h.clan}出身），封妃`,'event');
+  addNotif(`🏮 选秀：${h.name}入宫`,'good');
+  renderPanels(); updateTopBar();
+}
+
+function favorConsort(id){
+  const h = G.harem.find(x=>x.id===id);
+  if(!h) return;
+  h.favor = Math.min(100, h.favor+10);
+  G.addLog(`临幸${h.rank}${h.name}，恩宠+10`,'info');
+  renderPanels();
+}
+
+function crackdownEunuch(){
+  if(G.adminPoints<10){ addNotif('行政点不足','bad'); return; }
+  G.adminPoints -= 10;
+  G.eunuchPower = Math.max(0, G.eunuchPower-25);
+  G.addLog(`下旨整肃司礼监，${G.eunuchName}权势大减`,'good');
+  addNotif('🗡 宦官整肃成功','good');
+  renderPanels(); updateTopBar();
+}
+
+function enfeoffPrince(id){
+  const p = G.princes.find(x=>x.id===id);
+  if(!p || p.status!=='在朝') return;
+  p.status = '就藩';
+  G.stability = Math.min(100, G.stability+3);
+  G.addLog(`${p.title}${p.name}就藩封地，夺嫡隐患消除，稳定+3`,'good');
+  addNotif(`👑 ${p.title}就藩`,'good');
+  renderPanels(); updateTopBar();
+}
+
+// ---------- 钦天监 ----------
+function renderOmen(){
+  const el = document.getElementById('panel-omen');
+  const last = G.lastOmen;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">观星台 <span class="sub">本年天象</span></div>
+      ${last?`
+        <div style="font-size:16px" class="${last.type==='灾异'?'text-red':'text-green'}">${last.type==='灾异'?'⚠':'✨'} 【${last.name}】</div>
+        <div class="text-dim mt-8">${last.desc}</div>
+        ${last.type==='灾异'?`
+          <div class="flex gap-4 mt-8">
+            <button class="btn btn-gold" onclick="issueAtonement()">📜 下罪己诏（天命+5，稳定-2）</button>
+            <button class="btn" onclick="holdSacrifice()">🔥 祭天大典（20000两，天命+8）</button>
+          </div>`:`
+          <div class="text-green mt-8">祥瑞现世，天佑大明！</div>`}
+      `:`<div class="text-dim">本年天象平和，无灾无祥。</div>`}
+    </div>
+    <div class="card">
+      <div class="card-header">灾异祥瑞录 <span class="sub">近${G.omens.length}条</span></div>
+      ${G.omens.length?`<table>
+        <tr><th>年份</th><th>天象</th><th>类型</th><th>影响</th></tr>
+        ${G.omens.map(o=>`<tr>
+          <td>${o.year}</td>
+          <td>${o.name}</td>
+          <td class="${o.type==='灾异'?'text-red':'text-green'}">${o.type}</td>
+          <td class="text-dim">${o.type==='灾异'?`天命-${o.loss.tianming||0} 稳定-${o.loss.stability||0}`:`天命+${o.gain.tianming||0} 稳定+${o.gain.stability||0}`}</td>
+        </tr>`).join('')}
+      </table>`:'<div class="text-dim">暂无记录</div>'}
+    </div>`;
+}
+
+function issueAtonement(){
+  if(G.atonementYear === G.year){ addNotif('本年已下过罪己诏','bad'); return; }
+  G.atonementYear = G.year;
+  G.tianming = Math.min(100, G.tianming+5);
+  G.stability = Math.max(0, G.stability-2);
+  G.addLog('下罪己诏，自省其咎，天下感泣，天命+5 稳定-2','event');
+  addNotif('📜 罪己诏已颁','good');
+  renderPanels(); updateTopBar();
+}
+
+function holdSacrifice(){
+  if(G.treasury<20000){ addNotif('国库不足（需2万两）','bad'); return; }
+  G.treasury -= 20000;
+  G.tianming = Math.min(100, G.tianming+8);
+  G.addLog('祭天大典于天坛举行，香烟缭绕，天命+8','event');
+  addNotif('🔥 祭天完成，天命+8','good');
+  renderPanels(); updateTopBar();
+}
+
+// ---------- 锦衣卫 ----------
+function renderSpy(){
+  const el = document.getElementById('panel-spy');
+  const missions = G.spyMissions||[];
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">锦衣卫 <span class="sub">细作网强度 ${G.spyPower}/100</span></div>
+      <div class="text-dim mb-8">细作网越强，任务成功率越高。兵部尚书在任每年额外+1。可对诸国派遣细作、离间煽动。</div>
+      <table>
+        <tr><th>国名</th><th>关系</th><th>情报</th><th>操作</th></tr>
+        ${G.nations.map(n=>`<tr>
+          <td>${n.name}</td>
+          <td class="${n.relation<0?'text-red':'text-green'}">${n.relation}</td>
+          <td>${(G.spyIntel&&G.spyIntel[n.id])?'<span class="text-green">已掌握</span>':'<span class="text-dim">未知</span>'}</td>
+          <td class="flex gap-4">
+            <button class="btn btn-sm" onclick="launchSpy('${n.id}','spy')">🕵 派细作</button>
+            <button class="btn btn-sm" onclick="launchSpy('${n.id}','sabotage')">🔥 离间煽动</button>
+          </td>
+        </tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header">进行中任务 <span class="sub">${missions.length} 项</span></div>
+      ${missions.length?`<table>
+        <tr><th>类型</th><th>目标</th><th>剩余回合</th></tr>
+        ${missions.map(m=>`<tr>
+          <td>${m.kind==='spy'?'🕵 细作':'🔥 离间'}</td>
+          <td>${(G.nations.find(n=>n.id===m.target)||{}).name||m.target}</td>
+          <td>${m.turnsLeft}</td>
+        </tr>`).join('')}
+      </table>`:'<div class="text-dim">暂无进行中任务</div>'}
+    </div>`;
+}
+
+function launchSpy(target, kind){
+  const cost = kind==='spy'?3000:5000;
+  if(G.treasury<cost){ addNotif(`国库不足（需${cost}两）`,'bad'); return; }
+  if((G.spyMissions||[]).some(m=>m.target===target&&m.kind===kind)){ addNotif('该国已有同类任务','bad'); return; }
+  G.treasury -= cost;
+  G.spyMissions = G.spyMissions||[];
+  G.spyMissions.push({target, kind, turnsLeft:1});
+  const n = G.nations.find(x=>x.id===target);
+  G.addLog(`锦衣卫奉旨${kind==='spy'?'遣细作潜入':'施离间计于'}【${n?n.name:target}】`,'event');
+  addNotif(`🕵 任务已派出：${n?n.name:target}`,'good');
+  renderPanels(); updateTopBar();
+}
+
 // ---------- 起居注 ----------
 function renderLog(){
   const el = document.getElementById('panel-log');
@@ -1836,6 +2136,16 @@ function loadFromPlain(plain){
   if(!G.playersStocks) G.playersStocks = {};
   if(!G.playersFutures) G.playersFutures = {};
   if(!G.playerBank) G.playerBank = {deposit:0,loan:0};
+  // 新系统字段迁移（旧存档兼容）
+  if(!G.harem) G.harem = [{id:'h_q',name:'马氏',rank:'皇后',favor:80,clan:'寒门',son:null}];
+  if(!G.princes) G.princes = [{id:'p_1',name:'朱标',title:'皇太子',age:20,mother:'马氏',ambition:20,ability:70,status:'在朝'}];
+  if(typeof G.eunuchPower!=='number') G.eunuchPower = 10;
+  if(!G.eunuchName) G.eunuchName = '王安';
+  if(!G.omens) G.omens = [];
+  if(!('lastOmen' in G)) G.lastOmen = null;
+  if(!G.atonementYear) G.atonementYear = 0;
+  if(typeof G.spyPower!=='number') G.spyPower = 30;
+  if(!G.spyMissions) G.spyMissions = [];
   updateAll();
 }
 

@@ -76,6 +76,9 @@
         <div class="nav-item" data-panel="events" onclick="switchPanel('events')"><span class="icon">🔥</span>事件</div>
         <div class="nav-item" data-panel="wonders" onclick="switchPanel('wonders')"><span class="icon">🏗</span>奇观</div>
         <div class="nav-item" data-panel="impeach" onclick="switchPanel('impeach')"><span class="icon">⚖</span>弹劾</div>
+        <div class="nav-item" data-panel="harem" onclick="switchPanel('harem')"><span class="icon">🏮</span>内廷</div>
+        <div class="nav-item" data-panel="omen" onclick="switchPanel('omen')"><span class="icon">🔭</span>钦天监</div>
+        <div class="nav-item" data-panel="spy" onclick="switchPanel('spy')"><span class="icon">🕵</span>锦衣卫</div>
         <div class="nav-item" data-panel="log" onclick="switchPanel('log')"><span class="icon">📜</span>起居注</div>
       </div>
       <div id="content">
@@ -90,6 +93,9 @@
         <div id="panel-events" class="panel"></div>
         <div id="panel-wonders" class="panel"></div>
         <div id="panel-impeach" class="panel"></div>
+        <div id="panel-harem" class="panel"></div>
+        <div id="panel-omen" class="panel"></div>
+        <div id="panel-spy" class="panel"></div>
         <div id="panel-log" class="panel"></div>
       </div>
     </div>
@@ -113,6 +119,8 @@
         <hr style="border-color:var(--border);margin:8px 0">
         <div class="board-item" onclick="loadBookmarks()">⭐ 我的收藏</div>
         <div class="board-item" onclick="loadFeatured()">📌 精选好帖</div>
+        <div class="board-item" onclick="loadPolls()">🗳 共治投票</div>
+        <div class="board-item" onclick="loadLeaderboard()">🏆 龙椅排行榜</div>
         <button class="btn btn-gold community-post-btn" onclick="openPostEditor()">✏ 发帖</button>
       </div>
       <div class="community-main">

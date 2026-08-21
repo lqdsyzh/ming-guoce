@@ -484,6 +484,117 @@ async function loadFeatured() {
   } catch(e) { addNotif(e.message, 'bad'); }
 }
 
+// 共治投票
+async function loadPolls() {
+  const list = document.getElementById('post-list');
+  document.getElementById('community-board-name').textContent = '🗳 共治投票';
+  document.querySelectorAll('.board-item').forEach(b => b.classList.remove('active'));
+  list.innerHTML = '<div class="text-dim text-center" style="padding:40px">加载中…</div>';
+  try {
+    const data = await api('/api/community/polls');
+    let html = `<div style="margin-bottom:12px"><button class="btn btn-gold" onclick="openPollEditor()">➕ 发起投票</button></div>`;
+    if (!data.polls.length) {
+      html += '<div class="text-dim text-center" style="padding:60px">还没有投票，来发起第一个吧</div>';
+    } else {
+      html += data.polls.map(p => {
+        const maxCount = Math.max(1, ...p.counts);
+        return `
+        <div class="post-card">
+          <div class="post-head">
+            <span style="font-size:12px">🗳 ${esc(p.author)}</span>
+            <span class="text-dim" style="font-size:11px;margin-left:auto">${timeAgo(p.created_at)} · ${p.total}票</span>
+          </div>
+          <div class="post-title">${esc(p.title)}</div>
+          <div style="margin-top:8px">
+            ${p.options.map((opt, i) => {
+              const pct = p.total ? Math.round(p.counts[i] / p.total * 100) : 0;
+              const isMine = p.myVote === i;
+              const isLead = p.counts[i] === maxCount && p.total > 0;
+              return `<div style="margin:6px 0;cursor:${p.myVote === null && !p.closed ? 'pointer' : 'default'}" onclick="votePoll(${p.id},${i})">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px">
+                  <span class="${isMine ? 'text-gold' : ''}">${isMine ? '✔ ' : ''}${esc(opt)}</span>
+                  <span class="${isLead ? 'text-gold' : 'text-dim'}">${p.counts[i]}票 (${pct}%)</span>
+                </div>
+                <div style="height:6px;background:var(--bg-card);border-radius:3px;overflow:hidden">
+                  <div style="height:100%;width:${pct}%;background:${isLead ? 'var(--gold)' : 'var(--border-light)'}"></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          ${p.myVote === null && !p.closed ? '<div class="text-dim" style="font-size:11px;margin-top:4px">点击选项即可投票（每人一票）</div>' : ''}
+        </div>`;
+      }).join('');
+    }
+    list.innerHTML = html;
+    document.getElementById('post-pagination').innerHTML = '';
+  } catch(e) { list.innerHTML = `<div class="text-red text-center" style="padding:40px">${esc(e.message)}</div>`; }
+}
+
+async function votePoll(pollId, idx) {
+  try {
+    await api(`/api/community/polls/${pollId}/vote`, { method: 'POST', body: JSON.stringify({ option_idx: idx }) });
+    addNotif('🗳 投票成功', 'good');
+    loadPolls();
+  } catch(e) { addNotif(e.message, 'bad'); }
+}
+
+function openPollEditor() {
+  showModal('🗳 发起共治投票', `
+    <input id="poll-title" placeholder="投票主题（如：下一步国策优先发展什么？）" maxlength="100">
+    <input id="poll-opt-0" placeholder="选项1" maxlength="50">
+    <input id="poll-opt-1" placeholder="选项2" maxlength="50">
+    <input id="poll-opt-2" placeholder="选项3（可选）" maxlength="50">
+    <input id="poll-opt-3" placeholder="选项4（可选）" maxlength="50">
+  `, [
+    { text: '发起', cls: 'btn-gold', fn: async () => {
+      const title = document.getElementById('poll-title').value.trim();
+      const options = [0,1,2,3].map(i => document.getElementById('poll-opt-'+i).value.trim()).filter(Boolean);
+      if (!title) { addNotif('标题不能为空', 'bad'); return; }
+      if (options.length < 2) { addNotif('至少需要2个选项', 'bad'); return; }
+      try {
+        await api('/api/community/polls', { method: 'POST', body: JSON.stringify({ title, options }) });
+        addNotif('🗳 投票已发起', 'good');
+        closeModal(); loadPolls();
+      } catch(e) { addNotif(e.message, 'bad'); }
+    }},
+    { text: '取消', cls: '', fn: closeModal }
+  ]);
+}
+
+// 龙椅排行榜
+async function loadLeaderboard() {
+  const list = document.getElementById('post-list');
+  document.getElementById('community-board-name').textContent = '🏆 龙椅排行榜';
+  document.querySelectorAll('.board-item').forEach(b => b.classList.remove('active'));
+  list.innerHTML = '<div class="text-dim text-center" style="padding:40px">加载中…</div>';
+  try {
+    const data = await api('/api/dynasty/leaderboard');
+    if (!data.records.length) {
+      list.innerHTML = '<div class="text-dim text-center" style="padding:60px">暂无王朝终章记录——王朝覆灭时自动写入史册</div>';
+    } else {
+      const medals = ['🥇','🥈',''];
+      list.innerHTML = `
+      <div class="post-card" style="cursor:default">
+        <table>
+          <tr><th>名次</th><th>玩家</th><th>王朝终章</th><th>国祚</th><th>国库</th><th>天命</th><th>胜仗</th><th>奇观</th><th>覆灭原因</th></tr>
+          ${data.records.map((r, i) => `<tr>
+            <td>${medals[i] || (i+1)}</td>
+            <td class="text-gold">${esc(r.username)}</td>
+            <td>${esc(r.era)}</td>
+            <td>${r.turns}年</td>
+            <td>${Number(r.treasury).toLocaleString('zh-CN')}</td>
+            <td>${r.tianming}</td>
+            <td>${r.battles_won}</td>
+            <td>${r.wonders_done}</td>
+            <td class="text-dim">${esc(r.cause)}</td>
+          </tr>`).join('')}
+        </table>
+      </div>`;
+    }
+    document.getElementById('post-pagination').innerHTML = '';
+  } catch(e) { list.innerHTML = `<div class="text-red text-center" style="padding:40px">${esc(e.message)}</div>`; }
+}
+
 // 管理员精选切换
 async function toggleFeature(postId) {
   try {

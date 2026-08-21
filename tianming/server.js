@@ -118,6 +118,38 @@ CREATE TABLE IF NOT EXISTS post_featured(
   type TEXT DEFAULT 'pin',
   created_at TEXT DEFAULT (datetime('now','localtime'))
 );
+-- 龙椅排行榜：王朝终章记录
+CREATE TABLE IF NOT EXISTS dynasty_records(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  username TEXT NOT NULL,
+  era TEXT NOT NULL,
+  turns INTEGER NOT NULL,
+  treasury INTEGER DEFAULT 0,
+  tianming INTEGER DEFAULT 0,
+  stability INTEGER DEFAULT 0,
+  battles_won INTEGER DEFAULT 0,
+  wonders_done INTEGER DEFAULT 0,
+  cause TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now','localtime'))
+);
+-- 共治投票
+CREATE TABLE IF NOT EXISTS polls(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  options TEXT NOT NULL,
+  closed INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS poll_votes(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  poll_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  option_idx INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now','localtime')),
+  UNIQUE(poll_id, user_id)
+);
 `);
 
 // 种子管理员账号 admin / admin123
@@ -537,6 +569,68 @@ const server = http.createServer(async (req, res) => {
       const user = getSessionUser(req);
       db.prepare('INSERT INTO error_logs(user_id,username,page,message,stack) VALUES(?,?,?,?,?)')
         .run(user ? user.id : null, user ? user.username : '匿名', page || '', String(message || '').slice(0, 2000), String(stack || '').slice(0, 4000));
+      return sendJSON(res, 200, { ok: true });
+    }
+
+    // ===== 龙椅排行榜 =====
+    if (p === '/api/dynasty/record' && method === 'POST') {
+      const user = requireAuth(req, res); if (!user) return;
+      const { era, turns, treasury, tianming, stability, battles_won, wonders_done, cause } = await parseBody(req);
+      if (!era || !turns) return sendJSON(res, 400, { error: '数据不完整' });
+      db.prepare('INSERT INTO dynasty_records(user_id,username,era,turns,treasury,tianming,stability,battles_won,wonders_done,cause) VALUES(?,?,?,?,?,?,?,?,?,?)')
+        .run(user.id, user.username, String(era).slice(0, 20), parseInt(turns) || 0, parseInt(treasury) || 0,
+          parseInt(tianming) || 0, parseInt(stability) || 0, parseInt(battles_won) || 0, parseInt(wonders_done) || 0, String(cause || '').slice(0, 100));
+      return sendJSON(res, 200, { ok: true });
+    }
+
+    if (p === '/api/dynasty/leaderboard' && method === 'GET') {
+      const rows = db.prepare(`
+        SELECT username, era, turns, treasury, tianming, stability, battles_won, wonders_done, cause, created_at
+        FROM dynasty_records ORDER BY turns DESC, treasury DESC LIMIT 50`).all();
+      return sendJSON(res, 200, { records: rows });
+    }
+
+    // ===== 共治投票 =====
+    if (p === '/api/community/polls' && method === 'GET') {
+      const me = getSessionUser(req);
+      const rows = db.prepare('SELECT * FROM polls ORDER BY created_at DESC LIMIT 30').all();
+      const polls = rows.map(r => {
+        const options = JSON.parse(r.options);
+        const counts = options.map((_, i) =>
+          db.prepare('SELECT COUNT(*) AS n FROM poll_votes WHERE poll_id = ? AND option_idx = ?').get(r.id, i).n);
+        const myVote = me ? (db.prepare('SELECT option_idx FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(r.id, me.id) || {}).option_idx : null;
+        const author = db.prepare('SELECT username FROM users WHERE id = ?').get(r.user_id);
+        return { id: r.id, title: r.title, options, counts, total: counts.reduce((a, b) => a + b, 0),
+          myVote: myVote === undefined ? null : myVote, closed: r.closed, author: author ? author.username : '匿名', created_at: r.created_at };
+      });
+      return sendJSON(res, 200, { polls });
+    }
+
+    if (p === '/api/community/polls' && method === 'POST') {
+      const user = requireAuth(req, res); if (!user) return;
+      const { title, options } = await parseBody(req);
+      if (!title || !title.trim()) return sendJSON(res, 400, { error: '投票标题不能为空' });
+      if (!Array.isArray(options) || options.length < 2 || options.length > 6) return sendJSON(res, 400, { error: '选项需2-6个' });
+      db.prepare('INSERT INTO polls(user_id,title,options) VALUES(?,?,?)')
+        .run(user.id, String(title).slice(0, 100), JSON.stringify(options.map(o => String(o).slice(0, 50))));
+      return sendJSON(res, 200, { ok: true });
+    }
+
+    let mPoll = p.match(/^\/api\/community\/polls\/(\d+)\/vote$/);
+    if (mPoll && method === 'POST') {
+      const user = requireAuth(req, res); if (!user) return;
+      const pollId = parseInt(mPoll[1]);
+      const { option_idx } = await parseBody(req);
+      const poll = db.prepare('SELECT * FROM polls WHERE id = ?').get(pollId);
+      if (!poll) return sendJSON(res, 404, { error: '投票不存在' });
+      if (poll.closed) return sendJSON(res, 400, { error: '投票已结束' });
+      const opts = JSON.parse(poll.options);
+      if (typeof option_idx !== 'number' || option_idx < 0 || option_idx >= opts.length) return sendJSON(res, 400, { error: '选项无效' });
+      try {
+        db.prepare('INSERT INTO poll_votes(poll_id,user_id,option_idx) VALUES(?,?,?)').run(pollId, user.id, option_idx);
+      } catch (e) {
+        return sendJSON(res, 400, { error: '每人只能投一票' });
+      }
       return sendJSON(res, 200, { ok: true });
     }
 

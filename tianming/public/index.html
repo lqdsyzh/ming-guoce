@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天命·国策 — 大明王朝</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- ============ 登录/注册页 ============ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-title">天命 · 国策</div>
+    <div class="auth-sub">大明王朝 · 运筹帷幄</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">登录</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">注册</button>
+    </div>
+    <div id="auth-form-login">
+      <input type="text" id="login-username" placeholder="用户名" maxlength="20" autocomplete="username">
+      <input type="password" id="login-password" placeholder="密码" autocomplete="current-password">
+      <button class="auth-btn" onclick="doLogin()">登 录</button>
+    </div>
+    <div id="auth-form-register" style="display:none">
+      <input type="text" id="reg-username" placeholder="用户名（2-20字符）" maxlength="20" autocomplete="username">
+      <input type="password" id="reg-password" placeholder="密码（至少6位）" autocomplete="new-password">
+      <input type="password" id="reg-password2" placeholder="确认密码" autocomplete="new-password">
+      <button class="auth-btn" onclick="doRegister()">注 册</button>
+    </div>
+    <div id="auth-msg" class="auth-msg"></div>
+    <div class="auth-hint">管理员演示账号：admin / admin123</div>
+  </div>
+</div>
+
+<!-- ============ 主应用 ============ -->
+<div id="app" style="display:none">
+  <!-- 顶栏 -->
+  <div id="top-bar">
+    <div class="title">天命 · 国策</div>
+    <div class="top-nav">
+      <button class="top-nav-btn active" data-view="game" onclick="switchView('game')">🏛 游戏</button>
+      <button class="top-nav-btn" data-view="community" onclick="switchView('community')">💬 社区</button>
+      <button class="top-nav-btn" data-view="profile" onclick="switchView('profile')">👤 我的</button>
+      <button class="top-nav-btn" data-view="admin" id="admin-nav-btn" style="display:none" onclick="switchView('admin')">⚙ 后台</button>
+    </div>
+    <div class="top-info" id="top-info"></div>
+    <div class="top-user">
+      <span class="avatar" id="user-avatar"></span>
+      <span id="user-name"></span>
+      <button class="btn btn-sm" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+
+  <!-- ===== 游戏视图 ===== -->
+  <div id="view-game" class="view active">
+    <div id="game-toolbar">
+      <button class="btn btn-gold" onclick="annualReview()">📜 上朝进奏（年度推演）</button>
+      <button class="btn" onclick="cloudSave()">☁ 云端存档</button>
+      <button class="btn" onclick="cloudLoad()">☁ 读取云档</button>
+      <button class="btn" onclick="exportSave()">⬇ 导出JSON</button>
+      <span class="text-dim" id="save-status" style="font-size:11px"></span>
+    </div>
+    <div id="main">
+      <div id="sidebar">
+        <div class="nav-item active" data-panel="overview" onclick="switchPanel('overview')"><span class="icon">🏛</span>朝政总览</div>
+        <div class="nav-item" data-panel="provinces" onclick="switchPanel('provinces')"><span class="icon">🗺</span>两京十三省</div>
+        <div class="nav-item" data-panel="officials" onclick="switchPanel('officials')"><span class="icon">👤</span>官职体系</div>
+        <div class="nav-item" data-panel="military" onclick="switchPanel('military')"><span class="icon">⚔</span>军务</div>
+        <div class="nav-item" data-panel="economy" onclick="switchPanel('economy')"><span class="icon">💰</span>经济</div>
+        <div class="nav-item" data-panel="diplomacy" onclick="switchPanel('diplomacy')"><span class="icon">🏳</span>外交</div>
+        <div class="nav-item" data-panel="schools" onclick="switchPanel('schools')"><span class="icon">📖</span>学派</div>
+        <div class="nav-item" data-panel="exam" onclick="switchPanel('exam')"><span class="icon">🎓</span>科举</div>
+        <div class="nav-item" data-panel="events" onclick="switchPanel('events')"><span class="icon">🔥</span>事件</div>
+        <div class="nav-item" data-panel="wonders" onclick="switchPanel('wonders')"><span class="icon">🏗</span>奇观</div>
+        <div class="nav-item" data-panel="impeach" onclick="switchPanel('impeach')"><span class="icon">⚖</span>弹劾</div>
+        <div class="nav-item" data-panel="log" onclick="switchPanel('log')"><span class="icon">📜</span>起居注</div>
+      </div>
+      <div id="content">
+        <div id="panel-overview" class="panel active"></div>
+        <div id="panel-provinces" class="panel"></div>
+        <div id="panel-officials" class="panel"></div>
+        <div id="panel-military" class="panel"></div>
+        <div id="panel-economy" class="panel"></div>
+        <div id="panel-diplomacy" class="panel"></div>
+        <div id="panel-schools" class="panel"></div>
+        <div id="panel-exam" class="panel"></div>
+        <div id="panel-events" class="panel"></div>
+        <div id="panel-wonders" class="panel"></div>
+        <div id="panel-impeach" class="panel"></div>
+        <div id="panel-log" class="panel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 社区视图 ===== -->
+  <div id="view-community" class="view">
+    <div class="community-wrap">
+      <div class="community-sidebar">
+        <div class="board-title">板块</div>
+        <div class="board-item active" data-board="all" onclick="switchBoard('all')">📋 全部</div>
+        <div class="board-item" data-board="general" onclick="switchBoard('general')">💬 综合讨论</div>
+        <div class="board-item" data-board="strategy" onclick="switchBoard('strategy')">📖 游戏攻略</div>
+        <div class="board-item" data-board="chat" onclick="switchBoard('chat')">🍵 闲聊灌水</div>
+        <div class="board-item" data-board="notice" onclick="switchBoard('notice')">📢 站务公告</div>
+        <button class="btn btn-gold community-post-btn" onclick="openPostEditor()">✏ 发帖</button>
+      </div>
+      <div class="community-main">
+        <div class="community-toolbar">
+          <span id="community-board-name">全部帖子</span>
+          <div class="flex gap-4">
+            <button class="btn btn-sm" id="sort-new" onclick="setSort('new')">最新</button>
+            <button class="btn btn-sm" id="sort-hot" onclick="setSort('hot')">最热</button>
+          </div>
+        </div>
+        <div id="post-list"></div>
+        <div id="post-pagination" class="text-center mt-8"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 个人主页视图 ===== -->
+  <div id="view-profile" class="view">
+    <div id="profile-content" class="profile-wrap"></div>
+  </div>
+
+  <!-- ===== 管理后台视图 ===== -->
+  <div id="view-admin" class="view">
+    <div id="admin-content" class="admin-wrap"></div>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-header"><span id="modal-title">标题</span><button class="close" onclick="closeModal()">&times;</button></div>
+    <div id="modal-body"></div>
+    <div id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- 通知 -->
+<div id="notification"></div>
+
+<script src="/game.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

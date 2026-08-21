@@ -9,7 +9,7 @@ let currentSort = 'new';
 let currentPage = 1;
 const likedPosts = new Set();
 
-const BOARD_NAMES = { all:'全部帖子', general:'综合讨论', strategy:'游戏攻略', chat:'闲聊灌水', notice:'站务公告' };
+const BOARD_NAMES = { all:'全部帖子', general:'综合讨论', strategy:'游戏攻略', dynasty:'王朝风云', showoff:'战绩晒图', chat:'闲聊灌水', notice:'站务公告' };
 
 // ---------------- 通用请求 ----------------
 async function api(path, options = {}) {
@@ -108,6 +108,10 @@ async function enterApp() {
   av.style.background = currentUser.avatar_color || '#c9a84c';
   document.getElementById('admin-nav-btn').style.display = currentUser.is_admin ? '' : 'none';
 
+  // 通知轮询
+  loadNotifBadge();
+  setInterval(loadNotifBadge, 30000);
+
   // 载入游戏：优先云档
   try {
     const data = await api('/api/game/save');
@@ -125,7 +129,7 @@ function switchView(name) {
   if (v) v.classList.add('active');
   const b = document.querySelector(`.top-nav-btn[data-view="${name}"]`);
   if (b) b.classList.add('active');
-  if (name === 'community') loadPosts();
+  if (name === 'community') { loadPosts(); loadHotTags(); }
   if (name === 'profile') loadProfile(currentUser.id);
   if (name === 'admin') loadAdmin();
   if (name === 'game' && G) updateAll();
@@ -150,12 +154,20 @@ async function loadPosts() {
   const list = document.getElementById('post-list');
   list.innerHTML = '<div class="text-dim text-center" style="padding:40px">加载中…</div>';
   try {
-    const data = await api(`/api/community/posts?board=${currentBoard}&sort=${currentSort}&page=${currentPage}`);
+    const search = document.getElementById('search-input')?.value || '';
+    let url = `/api/community/posts?board=${currentBoard}&sort=${currentSort}&page=${currentPage}`;
+    if (search) url += `&q=${encodeURIComponent(search)}`;
+    const data = await api(url);
     if (!data.posts.length) {
       list.innerHTML = '<div class="text-dim text-center" style="padding:60px">还没有帖子，来发第一帖吧 ✏</div>';
     } else {
-      list.innerHTML = data.posts.map(p => `
+      list.innerHTML = data.posts.map(p => {
+        const tags = p.tags ? p.tags.split(',').filter(Boolean) : [];
+        const tagHtml = tags.map(t => `<span class="post-tag" onclick="event.stopPropagation();searchByTag('${esc(t)}')">#${esc(t)}</span>`).join('');
+        const featuredHtml = p.is_featured ? '<span class="featured-badge">📌 精选</span>' : '';
+        return `
         <div class="post-card" onclick="openPostDetail(${p.id})">
+          ${featuredHtml}
           <div class="post-head">
             <span class="avatar" style="background:${p.avatar_color};width:22px;height:22px;font-size:11px">${esc(p.username[0]).toUpperCase()}</span>
             <span style="font-size:12px">${esc(p.username)}</span>
@@ -166,11 +178,13 @@ async function loadPosts() {
           ${p.content ? `<div class="post-excerpt">${esc(p.content).slice(0, 150)}</div>` : ''}
           ${p.image ? `<img class="post-image" src="${p.image}" alt="">` : ''}
           ${p.link ? `<div class="text-dim" style="font-size:11px">🔗 ${esc(p.link).slice(0, 60)}</div>` : ''}
+          ${tagHtml ? `<div class="post-tags-row">${tagHtml}</div>` : ''}
           <div class="post-meta">
             <span class="like-btn ${likedPosts.has(p.id) ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike(${p.id},this)">❤ ${p.likes}</span>
             <span>💬 ${p.cmt_count}</span>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
     // 分页
     const pg = document.getElementById('post-pagination');
@@ -205,6 +219,8 @@ function openPostEditor() {
       <select id="post-board">
         <option value="general">💬 综合讨论</option>
         <option value="strategy">📖 游戏攻略</option>
+        <option value="dynasty">👑 王朝风云</option>
+        <option value="showoff">🏆 战绩晒图</option>
         <option value="chat">🍵 闲聊灌水</option>
         ${currentUser.is_admin ? '<option value="notice">📢 站务公告</option>' : ''}
       </select>
@@ -215,6 +231,7 @@ function openPostEditor() {
         <img id="post-image-preview" class="image-preview">
       </div>
       <input id="post-link" placeholder="🔗 附带网址（可选，如 https://…）">
+      <input id="post-tags" placeholder="🏷 标签（逗号分隔，最多5个，如：洪武,开局,攻略）">
     </div>
   `, [
     { text: '发布', cls: 'btn-gold', fn: submitPost },
@@ -242,13 +259,16 @@ async function submitPost() {
   const content = document.getElementById('post-content').value;
   const link = document.getElementById('post-link').value.trim();
   const board = document.getElementById('post-board').value;
+  const tagsRaw = document.getElementById('post-tags').value.trim();
   if (!title) { addNotif('标题不能为空', 'bad'); return; }
+  const tags = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean).slice(0, 5) : [];
   try {
-    await api('/api/community/posts', { method: 'POST', body: JSON.stringify({ board, title, content, image: pendingImage, link }) });
+    await api('/api/community/posts', { method: 'POST', body: JSON.stringify({ board, title, content, image: pendingImage, link, tags }) });
     closeModal();
     addNotif('📮 发布成功', 'good');
     currentPage = 1;
     loadPosts();
+    loadHotTags();
   } catch (e) { addNotif(e.message, 'bad'); }
 }
 
@@ -270,6 +290,9 @@ async function openPostDetail(postId) {
       ${linkHtml}
       <div class="flex gap-4" style="margin:10px 0">
         <button class="btn btn-sm ${likedPosts.has(p.id) ? 'btn-red' : ''}" onclick="toggleLikeDetail(${p.id})">❤ 赞 ${p.likes}</button>
+        <button class="btn btn-sm" onclick="toggleBookmark(${p.id})">⭐ 收藏</button>
+        ${p.user_id !== currentUser.id ? `<button class="btn btn-sm" id="follow-btn-detail" onclick="toggleFollow(${p.user_id})">➕ 关注</button>` : ''}
+        ${currentUser.is_admin ? `<button class="btn btn-sm" onclick="toggleFeature(${p.id})">📌 ${p.is_featured ? '取消精选' : '加精置顶'}</button>` : ''}
       </div>
       <div class="section-title">评论（${data.comments.length}）</div>
       <div style="max-height:240px;overflow-y:auto">
@@ -351,6 +374,177 @@ async function loadProfile(uid) {
           </div>`).join('') : '<div class="text-dim">还没有发过评论</div>'}
       </div>`;
   } catch (e) { el.innerHTML = `<div class="text-red text-center" style="padding:40px">${esc(e.message)}</div>`; }
+}
+
+// ---------------- 社区增强：搜索/标签/收藏/关注/通知/精选 ----------------
+
+// 搜索
+function doSearch() {
+  currentPage = 1;
+  loadPosts();
+}
+
+// 按标签筛选
+function searchByTag(tag) {
+  document.getElementById('search-input').value = '';
+  currentBoard = 'all';
+  document.querySelectorAll('.board-item').forEach(b => b.classList.toggle('active', b.dataset.board === 'all'));
+  const list = document.getElementById('post-list');
+  list.innerHTML = '<div class="text-dim text-center" style="padding:40px">加载中…</div>';
+  api(`/api/community/posts?board=all&sort=new&page=1&tag=${encodeURIComponent(tag)}`).then(data => {
+    document.getElementById('community-board-name').textContent = `#${tag}`;
+    if (!data.posts.length) {
+      list.innerHTML = `<div class="text-dim text-center" style="padding:60px">没有带 #${esc(tag)} 标签的帖子</div>`;
+    } else {
+      list.innerHTML = data.posts.map(p => `
+        <div class="post-card" onclick="openPostDetail(${p.id})">
+          <div class="post-head">
+            <span class="avatar" style="background:${p.avatar_color};width:22px;height:22px;font-size:11px">${esc(p.username[0]).toUpperCase()}</span>
+            <span style="font-size:12px">${esc(p.username)}</span>
+            <span class="board-tag">${BOARD_NAMES[p.board] || p.board}</span>
+          </div>
+          <div class="post-title">${esc(p.title)}</div>
+          <div class="post-meta"><span>❤ ${p.likes}</span><span>💬 ${p.cmt_count}</span></div>
+        </div>`).join('');
+    }
+    document.getElementById('post-pagination').innerHTML = '';
+  }).catch(e => addNotif(e.message, 'bad'));
+}
+
+// 热门标签
+async function loadHotTags() {
+  try {
+    const data = await api('/api/community/tags');
+    const el = document.getElementById('hot-tags');
+    if (!el) return;
+    el.innerHTML = data.tags.length ? data.tags.map(t =>
+      `<span class="hot-tag" onclick="searchByTag('${esc(t.tag)}')">#${esc(t.tag)} <span class="text-dim">${t.n}</span></span>`
+    ).join('') : '<div class="text-dim" style="font-size:11px">暂无标签</div>';
+  } catch(e) {}
+}
+
+// 收藏
+async function toggleBookmark(postId) {
+  try {
+    const data = await api(`/api/community/posts/${postId}/bookmark`, { method: 'POST' });
+    addNotif(data.bookmarked ? '⭐ 已收藏' : '已取消收藏', data.bookmarked ? 'good' : '');
+  } catch(e) { addNotif(e.message, 'bad'); }
+}
+
+// 收藏列表
+async function loadBookmarks() {
+  const list = document.getElementById('post-list');
+  document.getElementById('community-board-name').textContent = '⭐ 我的收藏';
+  document.querySelectorAll('.board-item').forEach(b => b.classList.remove('active'));
+  list.innerHTML = '<div class="text-dim text-center" style="padding:40px">加载中…</div>';
+  try {
+    const data = await api('/api/community/bookmarks');
+    if (!data.posts.length) {
+      list.innerHTML = '<div class="text-dim text-center" style="padding:60px">还没有收藏过帖子</div>';
+    } else {
+      list.innerHTML = data.posts.map(p => `
+        <div class="post-card" onclick="openPostDetail(${p.id})">
+          <div class="post-head">
+            <span class="avatar" style="background:${p.avatar_color};width:22px;height:22px;font-size:11px">${esc(p.username[0]).toUpperCase()}</span>
+            <span style="font-size:12px">${esc(p.username)}</span>
+            <span class="board-tag">${BOARD_NAMES[p.board] || p.board}</span>
+          </div>
+          <div class="post-title">${esc(p.title)}</div>
+          <div class="post-meta"><span>❤ ${p.likes}</span><span>💬 ${p.cmt_count}</span></div>
+        </div>`).join('');
+    }
+    document.getElementById('post-pagination').innerHTML = '';
+  } catch(e) { addNotif(e.message, 'bad'); }
+}
+
+// 精选
+async function loadFeatured() {
+  const list = document.getElementById('post-list');
+  document.getElementById('community-board-name').textContent = '📌 精选好帖';
+  document.querySelectorAll('.board-item').forEach(b => b.classList.remove('active'));
+  list.innerHTML = '<div class="text-dim text-center" style="padding:40px">加载中…</div>';
+  try {
+    const data = await api('/api/community/featured');
+    if (!data.posts.length) {
+      list.innerHTML = '<div class="text-dim text-center" style="padding:60px">暂无精选帖子</div>';
+    } else {
+      list.innerHTML = data.posts.map(p => `
+        <div class="post-card" onclick="openPostDetail(${p.id})">
+          <span class="featured-badge">📌 精选</span>
+          <div class="post-head">
+            <span class="avatar" style="background:${p.avatar_color};width:22px;height:22px;font-size:11px">${esc(p.username[0]).toUpperCase()}</span>
+            <span style="font-size:12px">${esc(p.username)}</span>
+            <span class="board-tag">${BOARD_NAMES[p.board] || p.board}</span>
+          </div>
+          <div class="post-title">${esc(p.title)}</div>
+          <div class="post-meta"><span>❤ ${p.likes}</span><span>💬 ${p.cmt_count}</span></div>
+        </div>`).join('');
+    }
+    document.getElementById('post-pagination').innerHTML = '';
+  } catch(e) { addNotif(e.message, 'bad'); }
+}
+
+// 管理员精选切换
+async function toggleFeature(postId) {
+  try {
+    const data = await api(`/api/admin/posts/${postId}/feature`, { method: 'POST' });
+    addNotif(data.featured ? '📌 已加精置顶' : '已取消精选', 'good');
+    openPostDetail(postId);
+  } catch(e) { addNotif(e.message, 'bad'); }
+}
+
+// 关注用户
+async function toggleFollow(userId) {
+  try {
+    const data = await api(`/api/community/follow/${userId}`, { method: 'POST' });
+    const btn = document.getElementById('follow-btn-detail');
+    if (btn) btn.textContent = data.following ? '✅ 已关注' : '➕ 关注';
+    addNotif(data.following ? '关注成功' : '已取消关注', data.following ? 'good' : '');
+  } catch(e) { addNotif(e.message, 'bad'); }
+}
+
+// 通知系统
+async function loadNotifBadge() {
+  if (!TOKEN) return;
+  try {
+    const data = await api('/api/notifications');
+    const badge = document.getElementById('notif-badge');
+    if (data.unread > 0) {
+      badge.textContent = data.unread > 99 ? '99+' : data.unread;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+async function openNotifications() {
+  try {
+    const data = await api('/api/notifications');
+    const notifs = data.notifications || [];
+    const html = notifs.length ? notifs.map(n => `
+      <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markNotifRead(${n.id})">
+        <div style="font-size:13px"><b>${esc(n.title)}</b></div>
+        ${n.body ? `<div class="text-dim" style="font-size:12px;margin-top:2px">${esc(n.body)}</div>` : ''}
+        <div class="text-dim" style="font-size:10px;margin-top:2px">${timeAgo(n.created_at)}</div>
+      </div>
+    `).join('') : '<div class="text-dim text-center" style="padding:40px">暂无通知</div>';
+    showModal('🔔 通知中心', html, [
+      { text: '全部已读', cls: 'btn-gold', fn: async () => {
+        await api('/api/notifications/read', { method: 'POST', body: JSON.stringify({}) });
+        closeModal(); loadNotifBadge();
+      }},
+      { text: '关闭', cls: '', fn: closeModal }
+    ]);
+  } catch(e) { addNotif(e.message, 'bad'); }
+}
+
+async function markNotifRead(id) {
+  try {
+    await api('/api/notifications/read', { method: 'POST', body: JSON.stringify({ id }) });
+    loadNotifBadge();
+    openNotifications();
+  } catch(e) {}
 }
 
 // ---------------- 管理后台 ----------------

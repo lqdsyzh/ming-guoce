@@ -200,6 +200,21 @@ tr.clickable{cursor:pointer}
 .error-item .error-msg{color:var(--accent-red);font-family:monospace;white-space:pre-wrap;word-break:break-all;margin:6px 0}
 .error-item .error-stack{color:var(--text-dim);font-family:monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;max-height:80px;overflow:hidden}
 
+/* === 社区增强 === */
+.notif-badge{position:absolute;top:-2px;right:-2px;background:var(--accent-red);color:#fff;font-size:10px;border-radius:8px;padding:0 4px;min-width:14px;text-align:center;line-height:14px}
+.search-input{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:6px 10px;color:var(--text);font-size:12px;width:180px;outline:none}
+.search-input:focus{border-color:var(--accent-gold)}
+.hot-tags{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0}
+.hot-tag{font-size:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;transition:0.2s}
+.hot-tag:hover{border-color:var(--accent-gold);color:var(--accent-gold)}
+.post-tags-row{display:flex;gap:4px;margin-top:4px}
+.post-tag{font-size:10px;color:var(--accent-gold);cursor:pointer}
+.post-tag:hover{text-decoration:underline}
+.featured-badge{position:absolute;top:6px;right:8px;font-size:10px;background:rgba(218,165,32,0.2);color:var(--accent-gold);border:1px solid rgba(218,165,32,0.3);border-radius:3px;padding:1px 4px}
+.notif-item{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:6px;cursor:pointer}
+.notif-item.unread{border-left:3px solid var(--accent-gold)}
+.notif-item:hover{border-color:var(--accent-gold)}
+
 @media(max-width:900px){
   #sidebar{width:150px}
   .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}

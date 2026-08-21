@@ -42,6 +42,7 @@
       <button class="top-nav-btn active" data-view="game" onclick="switchView('game')">🏛 游戏</button>
       <button class="top-nav-btn" data-view="community" onclick="switchView('community')">💬 社区</button>
       <button class="top-nav-btn" data-view="profile" onclick="switchView('profile')">👤 我的</button>
+      <button class="top-nav-btn" id="notif-bell" onclick="openNotifications()" style="position:relative">🔔<span id="notif-badge" class="notif-badge" style="display:none">0</span></button>
       <button class="top-nav-btn" data-view="admin" id="admin-nav-btn" style="display:none" onclick="switchView('admin')">⚙ 后台</button>
     </div>
     <div class="top-info" id="top-info"></div>
@@ -101,13 +102,22 @@
         <div class="board-item active" data-board="all" onclick="switchBoard('all')">📋 全部</div>
         <div class="board-item" data-board="general" onclick="switchBoard('general')">💬 综合讨论</div>
         <div class="board-item" data-board="strategy" onclick="switchBoard('strategy')">📖 游戏攻略</div>
+        <div class="board-item" data-board="dynasty" onclick="switchBoard('dynasty')">👑 王朝风云</div>
+        <div class="board-item" data-board="showoff" onclick="switchBoard('showoff')">🏆 战绩晒图</div>
         <div class="board-item" data-board="chat" onclick="switchBoard('chat')">🍵 闲聊灌水</div>
         <div class="board-item" data-board="notice" onclick="switchBoard('notice')">📢 站务公告</div>
+        <hr style="border-color:var(--border);margin:8px 0">
+        <div class="board-title">🔥 热门标签</div>
+        <div id="hot-tags" class="hot-tags"></div>
+        <hr style="border-color:var(--border);margin:8px 0">
+        <div class="board-item" onclick="loadBookmarks()">⭐ 我的收藏</div>
+        <div class="board-item" onclick="loadFeatured()">📌 精选好帖</div>
         <button class="btn btn-gold community-post-btn" onclick="openPostEditor()">✏ 发帖</button>
       </div>
       <div class="community-main">
         <div class="community-toolbar">
           <span id="community-board-name">全部帖子</span>
+          <input id="search-input" class="search-input" placeholder="🔍 搜索帖子…" onkeydown="if(event.key==='Enter')doSearch()">
           <div class="flex gap-4">
             <button class="btn btn-sm" id="sort-new" onclick="setSort('new')">最新</button>
             <button class="btn btn-sm" id="sort-hot" onclick="setSort('hot')">最热</button>

@@ -75,6 +75,49 @@ CREATE TABLE IF NOT EXISTS game_saves(
   save_data TEXT NOT NULL,
   updated_at TEXT DEFAULT (datetime('now','localtime'))
 );
+-- 社区增强：帖子标签
+CREATE TABLE IF NOT EXISTS post_tags(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL,
+  tag TEXT NOT NULL,
+  UNIQUE(post_id, tag)
+);
+CREATE INDEX IF NOT EXISTS idx_pt_tag ON post_tags(tag);
+-- 社区增强：用户关注
+CREATE TABLE IF NOT EXISTS follows(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  follower_id INTEGER NOT NULL,
+  following_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now','localtime')),
+  UNIQUE(follower_id, following_id)
+);
+-- 社区增强：通知
+CREATE TABLE IF NOT EXISTS notifications(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT,
+  link TEXT,
+  read INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now','localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, read);
+-- 社区增强：帖子收藏
+CREATE TABLE IF NOT EXISTS bookmarks(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  post_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now','localtime')),
+  UNIQUE(user_id, post_id)
+);
+-- 社区增强：帖子精选(管理员置顶/加精)
+CREATE TABLE IF NOT EXISTS post_featured(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL UNIQUE,
+  type TEXT DEFAULT 'pin',
+  created_at TEXT DEFAULT (datetime('now','localtime'))
+);
 `);
 
 // 种子管理员账号 admin / admin123
@@ -243,16 +286,22 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/community/posts' && method === 'GET') {
       const board = url.searchParams.get('board') || '';
       const sort = url.searchParams.get('sort') || 'new';
+      const search = url.searchParams.get('q') || '';
+      const tag = url.searchParams.get('tag') || '';
       const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
       const limit = 20;
       const offset = (page - 1) * limit;
       let where = 'WHERE p.deleted = 0';
       const params = [];
       if (board && board !== 'all') { where += ' AND p.board = ?'; params.push(board); }
+      if (search) { where += ' AND (p.title LIKE ? OR p.content LIKE ?)'; params.push('%'+search+'%','%'+search+'%'); }
+      if (tag) { where += ' AND p.id IN (SELECT post_id FROM post_tags WHERE tag=?)'; params.push(tag); }
       const order = sort === 'hot' ? 'ORDER BY p.likes DESC, p.created_at DESC' : 'ORDER BY p.created_at DESC';
       const rows = db.prepare(`
         SELECT p.*, u.username, u.avatar_color,
-          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted = 0) AS cmt_count
+          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted = 0) AS cmt_count,
+          (SELECT GROUP_CONCAT(tag, ',') FROM post_tags WHERE post_id = p.id) AS tags,
+          EXISTS(SELECT 1 FROM post_featured WHERE post_id = p.id) AS is_featured
         FROM posts p JOIN users u ON u.id = p.user_id
         ${where} ${order} LIMIT ? OFFSET ?
       `).all(...params, limit, offset);
@@ -262,7 +311,7 @@ const server = http.createServer(async (req, res) => {
 
     if (p === '/api/community/posts' && method === 'POST') {
       const user = requireAuth(req, res); if (!user) return;
-      const { board, title, content, image, link } = await parseBody(req);
+      const { board, title, content, image, link, tags } = await parseBody(req);
       if (!title || !title.trim()) return sendJSON(res, 400, { error: '标题不能为空' });
       if (title.length > 100) return sendJSON(res, 400, { error: '标题过长' });
       if ((content || '').length > 10000) return sendJSON(res, 400, { error: '内容过长' });
@@ -279,7 +328,34 @@ const server = http.createServer(async (req, res) => {
       }
       const info = db.prepare('INSERT INTO posts(user_id,board,title,content,image,link) VALUES(?,?,?,?,?,?)')
         .run(user.id, board || 'general', title.trim(), escapeHtml(content || ''), imagePath, escapeHtml(link || ''));
-      return sendJSON(res, 200, { ok: true, postId: Number(info.lastInsertRowid) });
+      const newPostId = Number(info.lastInsertRowid);
+      // 保存标签
+      if (Array.isArray(tags)) {
+        const insTag = db.prepare('INSERT OR IGNORE INTO post_tags(post_id, tag) VALUES(?, ?)');
+        tags.slice(0, 5).forEach(t => { const tag = String(t).trim().slice(0, 20); if (tag) insTag.run(newPostId, tag); });
+      }
+      return sendJSON(res, 200, { ok: true, postId: newPostId });
+    }
+
+    // 热门标签
+    if (p === '/api/community/tags' && method === 'GET') {
+      const rows = db.prepare(`
+        SELECT tag, COUNT(*) AS n FROM post_tags
+        GROUP BY tag ORDER BY n DESC LIMIT 20`).all();
+      return sendJSON(res, 200, { tags: rows });
+    }
+
+    // 帖子搜索
+    if (p === '/api/community/search' && method === 'GET') {
+      const q = url.searchParams.get('q') || '';
+      if (!q.trim()) return sendJSON(res, 200, { posts: [] });
+      const rows = db.prepare(`
+        SELECT p.*, u.username, u.avatar_color,
+          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted = 0) AS cmt_count
+        FROM posts p JOIN users u ON u.id = p.user_id
+        WHERE p.deleted = 0 AND (p.title LIKE ? OR p.content LIKE ?)
+        ORDER BY p.likes DESC LIMIT 30`).all('%'+q+'%','%'+q+'%');
+      return sendJSON(res, 200, { posts: rows });
     }
 
     let mPost = p.match(/^\/api\/community\/posts\/(\d+)$/);
@@ -298,6 +374,8 @@ const server = http.createServer(async (req, res) => {
     if (mPost && method === 'POST') {
       const user = requireAuth(req, res); if (!user) return;
       const postId = parseInt(mPost[1]);
+      const post = db.prepare('SELECT id, user_id, title FROM posts WHERE id = ? AND deleted = 0').get(postId);
+      if (!post) return sendJSON(res, 404, { error: '帖子不存在' });
       const existing = db.prepare('SELECT id FROM likes WHERE post_id = ? AND user_id = ?').get(postId, user.id);
       if (existing) {
         db.prepare('DELETE FROM likes WHERE id = ?').run(existing.id);
@@ -306,6 +384,11 @@ const server = http.createServer(async (req, res) => {
       } else {
         db.prepare('INSERT INTO likes(post_id,user_id) VALUES(?,?)').run(postId, user.id);
         db.prepare('UPDATE posts SET likes = likes + 1 WHERE id = ?').run(postId);
+        // 通知帖主
+        if (post.user_id !== user.id) {
+          db.prepare('INSERT INTO notifications(user_id,type,title,body,link) VALUES(?,?,?,?,?)')
+            .run(post.user_id, 'like', `${user.username} 赞了你的帖子`, post.title, `/post/${postId}`);
+        }
         return sendJSON(res, 200, { ok: true, liked: true });
       }
     }
@@ -317,12 +400,121 @@ const server = http.createServer(async (req, res) => {
       if (!content || !content.trim()) return sendJSON(res, 400, { error: '评论不能为空' });
       if (content.length > 2000) return sendJSON(res, 400, { error: '评论过长' });
       const postId = parseInt(mPost[1]);
-      const post = db.prepare('SELECT id FROM posts WHERE id = ? AND deleted = 0').get(postId);
+      const post = db.prepare('SELECT id, user_id, title FROM posts WHERE id = ? AND deleted = 0').get(postId);
       if (!post) return sendJSON(res, 404, { error: '帖子不存在' });
       db.prepare('INSERT INTO comments(post_id,user_id,content) VALUES(?,?,?)')
         .run(postId, user.id, escapeHtml(content.trim()));
       db.prepare('UPDATE posts SET comment_count = comment_count + 1 WHERE id = ?').run(postId);
+      // 通知帖主
+      if (post.user_id !== user.id) {
+        db.prepare('INSERT INTO notifications(user_id,type,title,body,link) VALUES(?,?,?,?,?)')
+          .run(post.user_id, 'comment', `${user.username} 评论了你的帖子`, escapeHtml(content.trim()).slice(0, 100), `/post/${postId}`);
+      }
       return sendJSON(res, 200, { ok: true });
+    }
+
+    // ---- 社区增强：收藏 ----
+    mPost = p.match(/^\/api\/community\/posts\/(\d+)\/bookmark$/);
+    if (mPost && method === 'POST') {
+      const user = requireAuth(req, res); if (!user) return;
+      const pid = parseInt(mPost[1]);
+      const existing = db.prepare('SELECT id FROM bookmarks WHERE user_id=? AND post_id=?').get(user.id, pid);
+      if (existing) {
+        db.prepare('DELETE FROM bookmarks WHERE id=?').run(existing.id);
+        return sendJSON(res, 200, { ok: true, bookmarked: false });
+      }
+      db.prepare('INSERT OR IGNORE INTO bookmarks(user_id, post_id) VALUES(?, ?)').run(user.id, pid);
+      return sendJSON(res, 200, { ok: true, bookmarked: true });
+    }
+
+    // 我的收藏列表
+    if (p === '/api/community/bookmarks' && method === 'GET') {
+      const user = requireAuth(req, res); if (!user) return;
+      const rows = db.prepare(`
+        SELECT p.*, u.username, u.avatar_color,
+          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted = 0) AS cmt_count
+        FROM bookmarks b JOIN posts p ON p.id = b.post_id JOIN users u ON u.id = p.user_id
+        WHERE b.user_id = ? AND p.deleted = 0 ORDER BY b.created_at DESC LIMIT 50`).all(user.id);
+      return sendJSON(res, 200, { posts: rows });
+    }
+
+    // ---- 社区增强：关注用户 ----
+    let mFollow = p.match(/^\/api\/community\/follow\/(\d+)$/);
+    if (mFollow && method === 'POST') {
+      const user = requireAuth(req, res); if (!user) return;
+      const targetId = parseInt(mFollow[1]);
+      if (targetId === user.id) return sendJSON(res, 400, { error: '不能关注自己' });
+      const target = db.prepare('SELECT id, username FROM users WHERE id=?').get(targetId);
+      if (!target) return sendJSON(res, 404, { error: '用户不存在' });
+      const existing = db.prepare('SELECT id FROM follows WHERE follower_id=? AND following_id=?').get(user.id, targetId);
+      if (existing) {
+        db.prepare('DELETE FROM follows WHERE id=?').run(existing.id);
+        return sendJSON(res, 200, { ok: true, following: false });
+      }
+      db.prepare('INSERT OR IGNORE INTO follows(follower_id, following_id) VALUES(?, ?)').run(user.id, targetId);
+      // 通知被关注者
+      db.prepare('INSERT INTO notifications(user_id,type,title,body,link) VALUES(?,?,?,?,?)')
+        .run(targetId, 'follow', `${user.username} 关注了你`, '', `/user/${user.id}`);
+      return sendJSON(res, 200, { ok: true, following: true });
+    }
+
+    // 关注列表 / 粉丝列表
+    if (p === '/api/community/following' && method === 'GET') {
+      const user = requireAuth(req, res); if (!user) return;
+      const rows = db.prepare(`
+        SELECT u.id, u.username, u.avatar_color FROM follows f JOIN users u ON u.id = f.following_id
+        WHERE f.follower_id = ? ORDER BY f.created_at DESC`).all(user.id);
+      return sendJSON(res, 200, { users: rows });
+    }
+    if (p === '/api/community/followers' && method === 'GET') {
+      const uid = parseInt(url.searchParams.get('user_id') || '0');
+      const rows = db.prepare(`
+        SELECT u.id, u.username, u.avatar_color FROM follows f JOIN users u ON u.id = f.follower_id
+        WHERE f.following_id = ? ORDER BY f.created_at DESC`).all(uid);
+      return sendJSON(res, 200, { users: rows });
+    }
+
+    // ---- 社区增强：通知系统 ----
+    if (p === '/api/notifications' && method === 'GET') {
+      const user = requireAuth(req, res); if (!user) return;
+      const rows = db.prepare(`
+        SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`).all(user.id);
+      const unread = db.prepare('SELECT COUNT(*) AS n FROM notifications WHERE user_id=? AND read=0').get(user.id).n;
+      return sendJSON(res, 200, { notifications: rows, unread });
+    }
+    if (p === '/api/notifications/read' && method === 'POST') {
+      const user = requireAuth(req, res); if (!user) return;
+      const { id } = await parseBody(req);
+      if (id) {
+        db.prepare('UPDATE notifications SET read=1 WHERE id=? AND user_id=?').run(id, user.id);
+      } else {
+        db.prepare('UPDATE notifications SET read=1 WHERE user_id=?').run(user.id);
+      }
+      return sendJSON(res, 200, { ok: true });
+    }
+
+    // ---- 社区增强：管理员精选/置顶 ----
+    mPost = p.match(/^\/api\/admin\/posts\/(\d+)\/feature$/);
+    if (mPost && method === 'POST') {
+      const user = requireAuth(req, res); if (!user || !user.is_admin) return sendJSON(res, 403, { error: '无权限' });
+      const pid = parseInt(mPost[1]);
+      const existing = db.prepare('SELECT id FROM post_featured WHERE post_id=?').get(pid);
+      if (existing) {
+        db.prepare('DELETE FROM post_featured WHERE id=?').run(existing.id);
+        return sendJSON(res, 200, { ok: true, featured: false });
+      }
+      db.prepare('INSERT OR IGNORE INTO post_featured(post_id) VALUES(?)').run(pid);
+      return sendJSON(res, 200, { ok: true, featured: true });
+    }
+
+    // 精选帖子列表
+    if (p === '/api/community/featured' && method === 'GET') {
+      const rows = db.prepare(`
+        SELECT p.*, u.username, u.avatar_color,
+          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted = 0) AS cmt_count
+        FROM post_featured f JOIN posts p ON p.id = f.post_id JOIN users u ON u.id = p.user_id
+        WHERE p.deleted = 0 ORDER BY f.created_at DESC LIMIT 10`).all();
+      return sendJSON(res, 200, { posts: rows });
     }
 
     // 个人主页数据

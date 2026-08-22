@@ -3,7 +3,10 @@
 // ============================================================
 
 let G = null;
-let currentUser = null; // 由 app.js 注入
+// 兜底 esc，避免 game.js 比 app.js 先加载报错
+if(typeof esc !== 'function'){
+  window.esc = function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); };
+}
 
 // ============================
 // 1. 基础数据定义
@@ -2095,12 +2098,12 @@ function renderLog(){
 
 // ---------- 云存档 ----------
 async function cloudSave(){
-  if(!currentUser){ addNotif('请先登录','bad'); return; }
+  if(!window.currentUser){ addNotif('请先登录','bad'); return; }
   try {
     const plain = JSON.parse(JSON.stringify(G, (k,v)=>typeof v==='function'?undefined:v));
     const res = await fetch('/api/game/save', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('tm_token')||'')},
       body:JSON.stringify({data:plain})
     });
     const data = await res.json();
@@ -2112,9 +2115,11 @@ async function cloudSave(){
 }
 
 async function cloudLoad(){
-  if(!currentUser){ addNotif('请先登录','bad'); return; }
+  if(!window.currentUser){ addNotif('请先登录','bad'); return; }
   try {
-    const res = await fetch('/api/game/save');
+    const res = await fetch('/api/game/save', {
+      headers:{'Authorization': 'Bearer ' + (localStorage.getItem('tm_token')||'')}
+    });
     const data = await res.json();
     if(!data.save){ addNotif('云端无存档','bad'); return; }
     loadFromPlain(JSON.parse(data.save));
@@ -2163,16 +2168,19 @@ function exportSave(){
 // 分享战绩到社交平台
 function shareAchievement(){
   if(!G){ addNotif('请先开始游戏','bad'); return; }
+  const pop = G.provinces.reduce((s,p)=>s+p.pop,0);
+  const army = G.military.jingying.troops + Object.values(G.military.jiubian).reduce((s,j)=>s+j.troops,0) + G.military.weisuo.reduce((s,w)=>s+w.troops,0);
+  const doneWonders = (G.wonders||[]).filter(w=>w.done).length;
   const txt = `【天命·国策】${G.era}${G.eraYear}年朝政报告
 👑 帝号：${G.era}
 📅 在位：${G.eraYear}年
 ☀ 天命：${Math.round(G.tianming)}/100
 🛡 稳定：${Math.round(G.stability)}/100
-💰 国库：${Math.round(G.treasury)}万两
-🌾 粮储：${Math.round(G.grain)}万石
-👥 人口：${Math.round(G.population)}万
-⚔ 军力：${Math.round(G.military)}万
-🏗 奇观：${(G.wonders||[]).length}座
+💰 国库：${fmt(G.treasury)}两
+🌾 粮储：${fmt(G.grainReserve)}石
+👥 人口：${fmt(pop)}
+⚔ 军力：${fmt(army)}
+🏗 奇观：${doneWonders}座
 
 你也能开创大明王朝 → ${location.origin}`;
 

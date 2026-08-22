@@ -3,7 +3,9 @@
 // ============================================================
 
 let TOKEN = localStorage.getItem('tm_token') || '';
-currentUser = null; // 注入 game.js 的全局变量
+// 声明为 let 并挂载到 window 供 game.js 读取
+let currentUser = null;
+window.currentUser = null;
 let currentBoard = 'all';
 let currentSort = 'new';
 let currentPage = 1;
@@ -87,13 +89,14 @@ async function doLogin() {
     TOKEN = data.token;
     localStorage.setItem('tm_token', TOKEN);
     currentUser = data.user;
+    window.currentUser = data.user;
     await enterApp();
   } catch (e) { authMsg(e.message); }
 }
 
 async function doLogout() {
   try { await api('/api/logout', { method: 'POST' }); } catch (e) {}
-  TOKEN = ''; currentUser = null;
+  TOKEN = ''; currentUser = null; window.currentUser = null;
   localStorage.removeItem('tm_token');
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
@@ -774,9 +777,10 @@ async function adminDeletePost(id) {
   try {
     const data = await api('/api/me');
     currentUser = data.user;
+    window.currentUser = data.user;
     await enterApp();
   } catch (e) {
-    TOKEN = ''; currentUser = null;
+    TOKEN = ''; currentUser = null; window.currentUser = null;
     localStorage.removeItem('tm_token');
   }
 })();

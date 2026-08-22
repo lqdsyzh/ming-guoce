@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天命·国策 — 大明王朝</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="style.css">
+<style>
+/* OSS 纯静态版：隐藏需要后端的入口 */
+#auth-screen { display: none !important; }
+#app { display: flex !important; }
+.top-nav-btn[data-view="community"],
+.top-nav-btn[data-view="profile"],
+.top-nav-btn[data-view="admin"],
+#notif-bell,
+.top-user { display: none !important; }
+.oss-banner {
+  background: linear-gradient(90deg, rgba(201,168,76,.15), rgba(201,168,76,.05));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  margin: 10px 18px 0 18px;
+  font-size: 12px;
+  color: var(--text-dim, #888);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.oss-banner b { color: var(--accent-gold, #c9a84c); }
+</style>
+</head>
+<body>
+
+<!-- ============ 登录/注册页（OSS 版隐藏） ============ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-title">天命 · 国策</div>
+    <div class="auth-sub">大明王朝 · 运筹帷幄</div>
+    <div id="auth-form-login">
+      <input type="text" id="login-username" placeholder="用户名">
+      <input type="password" id="login-password" placeholder="密码">
+      <button class="auth-btn" onclick="doLogin()">登 录</button>
+    </div>
+    <div id="auth-form-register" style="display:none">
+      <input type="text" id="reg-username" placeholder="用户名">
+      <input type="password" id="reg-password" placeholder="密码">
+      <input type="password" id="reg-password2" placeholder="确认密码">
+      <button class="auth-btn" onclick="doRegister()">注 册</button>
+    </div>
+    <div id="auth-msg" class="auth-msg"></div>
+  </div>
+</div>
+
+<!-- ============ 主应用 ============ -->
+<div id="app">
+  <div class="oss-banner">
+    📦 <b>OSS 纯静态版</b> · 游戏核心可玩，存档保存在<b>本浏览器</b>（清缓存会丢档，建议定期「导出JSON」备份）。如需注册/社区/云存档功能，请部署完整版到服务器。
+  </div>
+  <!-- 顶栏 -->
+  <div id="top-bar">
+    <div class="title">天命 · 国策</div>
+    <div class="top-nav">
+      <button class="top-nav-btn active" data-view="game" onclick="switchView('game')">🏛 游戏</button>
+    </div>
+    <div class="top-info" id="top-info"></div>
+    <div class="top-user">
+      <span class="avatar" id="user-avatar"></span>
+      <span id="user-name"></span>
+      <button class="btn btn-sm" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+
+  <!-- ===== 游戏视图 ===== -->
+  <div id="view-game" class="view active">
+    <div id="game-toolbar">
+      <button class="btn btn-gold" onclick="annualReview()">📜 上朝进奏（年度推演）</button>
+      <button class="btn" onclick="localSave()" title="存档保存在当前浏览器 localStorage">💾 本地存档</button>
+      <button class="btn" onclick="localLoad()" title="从浏览器 localStorage 读档">📂 读取本地档</button>
+      <button class="btn" onclick="exportSave()">⬇ 导出JSON（备份）</button>
+      <button class="btn btn-share" onclick="shareAchievement()">📢 分享战绩</button>
+      <span class="text-dim" id="save-status" style="font-size:11px"></span>
+    </div>
+    <div id="main">
+      <div id="sidebar">
+        <div class="nav-item active" data-panel="overview" onclick="switchPanel('overview')"><span class="icon">🏛</span>朝政总览</div>
+        <div class="nav-item" data-panel="provinces" onclick="switchPanel('provinces')"><span class="icon">🗺</span>两京十三省</div>
+        <div class="nav-item" data-panel="officials" onclick="switchPanel('officials')"><span class="icon">👤</span>官职体系</div>
+        <div class="nav-item" data-panel="military" onclick="switchPanel('military')"><span class="icon">⚔</span>军务</div>
+        <div class="nav-item" data-panel="economy" onclick="switchPanel('economy')"><span class="icon">💰</span>经济</div>
+        <div class="nav-item" data-panel="diplomacy" onclick="switchPanel('diplomacy')"><span class="icon">🏳</span>外交</div>
+        <div class="nav-item" data-panel="schools" onclick="switchPanel('schools')"><span class="icon">📖</span>学派</div>
+        <div class="nav-item" data-panel="exam" onclick="switchPanel('exam')"><span class="icon">🎓</span>科举</div>
+        <div class="nav-item" data-panel="events" onclick="switchPanel('events')"><span class="icon">🔥</span>事件</div>
+        <div class="nav-item" data-panel="wonders" onclick="switchPanel('wonders')"><span class="icon">🏗</span>奇观</div>
+        <div class="nav-item" data-panel="impeach" onclick="switchPanel('impeach')"><span class="icon">⚖</span>弹劾</div>
+        <div class="nav-item" data-panel="harem" onclick="switchPanel('harem')"><span class="icon">🏮</span>内廷</div>
+        <div class="nav-item" data-panel="omen" onclick="switchPanel('omen')"><span class="icon">🔭</span>钦天监</div>
+        <div class="nav-item" data-panel="spy" onclick="switchPanel('spy')"><span class="icon">🕵</span>锦衣卫</div>
+        <div class="nav-item" data-panel="log" onclick="switchPanel('log')"><span class="icon">📜</span>起居注</div>
+      </div>
+      <div id="content">
+        <div id="panel-overview" class="panel active"></div>
+        <div id="panel-provinces" class="panel"></div>
+        <div id="panel-officials" class="panel"></div>
+        <div id="panel-military" class="panel"></div>
+        <div id="panel-economy" class="panel"></div>
+        <div id="panel-diplomacy" class="panel"></div>
+        <div id="panel-schools" class="panel"></div>
+        <div id="panel-exam" class="panel"></div>
+        <div id="panel-events" class="panel"></div>
+        <div id="panel-wonders" class="panel"></div>
+        <div id="panel-impeach" class="panel"></div>
+        <div id="panel-harem" class="panel"></div>
+        <div id="panel-omen" class="panel"></div>
+        <div id="panel-spy" class="panel"></div>
+        <div id="panel-log" class="panel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 其他视图：OSS 版保留 DOM 但不展示 ===== -->
+  <div id="view-community" class="view"></div>
+  <div id="view-profile" class="view"></div>
+  <div id="view-admin" class="view"></div>
+</div>
+
+<!-- 弹窗 -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-header"><span id="modal-title">标题</span><button class="close" onclick="closeModal()">&times;</button></div>
+    <div id="modal-body"></div>
+    <div id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- 通知 -->
+<div id="notification"></div>
+
+<script src="game.js"></script>
+<script src="app.js"></script>
+<script src="oss-standalone.js"></script>
+</body>
+</html>

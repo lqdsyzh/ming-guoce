@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天命·国策 — 管理后台</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="style.css">
+<style>
+  body { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .oss-notice { background: rgba(220,80,80,0.08); border: 1px solid rgba(220,80,80,0.3); color: #d48a8a;
+    padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; line-height: 1.8; }
+  .oss-notice b { color: var(--accent-red); }
+  .adm-title { font-size: 22px; color: var(--gold); margin-bottom: 4px; }
+  .adm-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+  .stat-num { font-size: 26px; color: var(--gold); font-weight: bold; }
+  .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .adm-section { margin-bottom: 28px; }
+  .adm-section h3 { color: var(--gold); font-size: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: normal; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+  .badge-green { background: rgba(80,200,120,0.15); color: var(--accent-green); }
+  .badge-red { background: rgba(220,80,80,0.15); color: var(--accent-red); }
+  .badge-gray { background: rgba(150,150,150,0.15); color: var(--text-dim); }
+  .btn-sm { padding: 3px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); }
+  .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+  .err-msg { color: var(--accent-red); font-family: monospace; font-size: 12px; word-break: break-all; }
+  #adm-login { max-width: 360px; margin: 80px auto; }
+</style>
+</head>
+<body>
+
+<div class="oss-notice">
+  <b>OSS 纯静态版提示：</b>管理后台需要服务器端运行（需要查询用户、帖子、错误日志数据库）。
+  在 OSS 对象存储中管理后台<b>无法使用</b>。如需使用，请部署完整版（Node.js + SQLite）到 ECS 服务器或函数计算。
+  <br>→ <a href="index.html" style="color:var(--gold)">返回游戏 →</a>
+</div>
+
+<div id="adm-login">
+  <div class="auth-box">
+    <div class="auth-title">管理后台</div>
+    <div class="auth-sub">天命·国策 · 仅限管理员</div>
+    <input type="text" id="adm-username" placeholder="管理员用户名" autocomplete="username">
+    <input type="password" id="adm-password" placeholder="密码" autocomplete="current-password">
+    <button class="auth-btn" onclick="admLogin()">登 录</button>
+    <div id="adm-msg" class="auth-msg"></div>
+  </div>
+</div>
+
+<div id="adm-main" style="display:none">
+  <div class="adm-title">🏛 天命·国策 管理后台</div>
+  <div class="adm-sub"><a href="index.html" style="color:var(--gold)">← 返回游戏</a> · <span id="adm-user"></span> · <a href="javascript:void(0)" onclick="admLogout()" style="color:var(--accent-red)">退出</a></div>
+
+  <div class="stat-grid" id="stat-grid"></div>
+
+  <div class="adm-section">
+    <h3>👥 用户管理（登录状态观察）</h3>
+    <table>
+      <thead><tr><th>ID</th><th>用户名</th><th>状态</th><th>注册时间</th><th>最后登录</th><th>最后活跃</th><th>发帖</th><th>操作</th></tr></thead>
+      <tbody id="user-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="adm-section">
+    <h3>🐛 前端错误上报</h3>
+    <table>
+      <thead><tr><th>ID</th><th>错误信息</th><th>页面</th><th>时间</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody id="err-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let ADM_TOKEN = localStorage.getItem('tm_admin_token') || '';
+
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function admApi(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (ADM_TOKEN) headers['Authorization'] = 'Bearer ' + ADM_TOKEN;
+  const res = await fetch(path, { ...options, headers });
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) throw new Error(data.error || '请求失败(' + res.status + ')');
+  return data;
+}
+
+async function admLogin() {
+  const username = document.getElementById('adm-username').value.trim();
+  const password = document.getElementById('adm-password').value;
+  const msg = document.getElementById('adm-msg');
+  try {
+    const data = await admApi('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+    if (!data.user.is_admin) { msg.textContent = '该账号不是管理员'; msg.style.color = 'var(--accent-red)'; return; }
+    ADM_TOKEN = data.token;
+    localStorage.setItem('tm_admin_token', ADM_TOKEN);
+    initAdmin();
+  } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--accent-red)'; }
+}
+
+function admLogout() {
+  localStorage.removeItem('tm_admin_token');
+  location.reload();
+}
+
+async function initAdmin() {
+  try {
+    const me = await admApi('/api/me');
+    if (!me.user.is_admin) throw new Error('需要管理员权限');
+    document.getElementById('adm-login').style.display = 'none';
+    document.getElementById('adm-main').style.display = '';
+    document.getElementById('adm-user').textContent = '管理员：' + me.user.username;
+    loadStats(); loadUsers(); loadErrors();
+  } catch (e) {
+    ADM_TOKEN = '';
+    localStorage.removeItem('tm_admin_token');
+    const msg = document.getElementById('adm-msg');
+    msg.textContent = '登录已失效：' + e.message;
+    msg.style.color = 'var(--accent-red)';
+  }
+}
+
+async function loadStats() {
+  try {
+    const s = await admApi('/api/admin/stats');
+    document.getElementById('stat-grid').innerHTML = [
+      ['用户总数', s.userCount], ['今日活跃', s.todayLogin], ['10分钟内在线', s.onlineRecent],
+      ['帖子数', s.postCount], ['评论数', s.commentCount], ['未处理错误', s.errorCount]
+    ].map(([label, num]) => `<div class="stat-card"><div class="stat-num">${num}</div><div class="stat-label">${label}</div></div>`).join('');
+  } catch (e) {}
+}
+
+function fmtTime(t) {
+  if (!t) return '—';
+  return t.length > 16 ? t.slice(0, 16) : t;
+}
+
+function isActive(lastActive) {
+  if (!lastActive) return false;
+  const d = new Date(lastActive.replace(' ', 'T'));
+  return (Date.now() - d.getTime()) < 10 * 60 * 1000;
+}
+
+async function loadUsers() {
+  try {
+    const data = await admApi('/api/admin/users');
+    document.getElementById('user-tbody').innerHTML = data.users.map(u => {
+      const online = isActive(u.last_active);
+      const status = u.banned ? '<span class="badge badge-red">已封禁</span>'
+        : online ? '<span class="badge badge-green">在线</span>'
+        : '<span class="badge badge-gray">离线</span>';
+      const banBtn = u.is_admin ? '—' : (u.banned
+        ? `<button class="btn-sm" onclick="toggleBan(${u.id},0)">解封</button>`
+        : `<button class="btn-sm" onclick="toggleBan(${u.id},1)">封禁</button>`);
+      return `<tr>
+        <td>${u.id}</td>
+        <td>${esc(u.username)}${u.is_admin ? ' <span class="badge badge-green">管理员</span>' : ''}</td>
+        <td>${status}</td>
+        <td>${fmtTime(u.created_at)}</td>
+        <td>${fmtTime(u.last_login)}</td>
+        <td>${fmtTime(u.last_active)}</td>
+        <td>${u.post_count}</td>
+        <td>${banBtn}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {}
+}
+
+async function toggleBan(uid, banned) {
+  try {
+    await admApi(`/api/admin/users/${uid}/ban`, { method: 'POST', body: JSON.stringify({ banned: !!banned }) });
+    loadUsers(); loadStats();
+  } catch (e) { alert(e.message); }
+}
+
+async function loadErrors() {
+  try {
+    const data = await admApi('/api/admin/errors');
+    const tbody = document.getElementById('err-tbody');
+    if (!data.errors.length) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-dim)">暂无错误上报 🎉</td></tr>'; return; }
+    tbody.innerHTML = data.errors.map(er => `<tr>
+      <td>${er.id}</td>
+      <td class="err-msg">${esc(er.message)}</td>
+      <td>${esc(er.page)}</td>
+      <td>${fmtTime(er.created_at)}</td>
+      <td>${er.resolved ? '<span class="badge badge-gray">已处理</span>' : '<span class="badge badge-red">待处理</span>'}</td>
+      <td>${er.resolved ? '—' : `<button class="btn-sm" onclick="resolveErr(${er.id})">标记处理</button>`}</td>
+    </tr>`).join('');
+  } catch (e) {}
+}
+
+async function resolveErr(id) {
+  try {
+    await admApi(`/api/admin/errors/${id}/resolve`, { method: 'POST', body: '{}' });
+    loadErrors(); loadStats();
+  } catch (e) { alert(e.message); }
+}
+
+if (ADM_TOKEN) initAdmin();
+</script>
+</body>
+</html>

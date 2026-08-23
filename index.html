@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=2.0">
+<title>大明国策 · 永乐风云</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{font-family:"KaiTi","STKaiti","SimSun",serif;background:#0d0a08;color:#d4c5a0;font-size:13px;line-height:1.7}
+#app{height:100vh;display:flex;flex-direction:column;max-width:1500px;margin:0 auto}
+#topBar{background:linear-gradient(180deg,#2a1f15 0%,#1a1208 100%);border-bottom:2px solid #8b6914;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;flex-shrink:0;z-index:50;box-shadow:0 2px 16px rgba(139,105,20,0.3)}
+#topBar .title-area{display:flex;align-items:center;gap:12px}
+#topBar .title{color:#e8c860;font-size:20px;font-weight:bold;text-shadow:0 0 16px rgba(232,200,96,0.5);letter-spacing:4px}
+#topBar .year{color:#c9a84c;font-size:14px;font-weight:bold;background:#1a1208;border:1px solid #6b4f1a;border-radius:4px;padding:4px 12px}
+#topBar .season{color:#d4a574;font-size:14px;font-weight:bold;margin-left:4px}
+#topBar .stats{display:flex;gap:6px;flex-wrap:wrap}
+.stat-box{background:#1a1208;border:1px solid #5a4220;border-radius:4px;padding:4px 10px;font-size:11px;min-width:72px;text-align:center;transition:all 0.3s}
+.stat-box:hover{border-color:#8b6914}
+.stat-box l{display:block;color:#8a7050;font-size:10px;margin-bottom:1px}
+.stat-box s{color:#d4a574;font-weight:bold;font-size:13px}
+.stat-box.danger s{color:#c44}
+.stat-box.warn s{color:#d88}
+.stat-box.good s{color:#8b8}
+#mainWrap{display:flex;flex:1;min-height:0;overflow:hidden}
+#sideNav{width:110px;background:linear-gradient(180deg,#1a1208 0%,#120c04 100%);border-right:1px solid #5a4220;display:flex;flex-direction:column;padding:8px 6px;gap:4px;flex-shrink:0;overflow-y:auto}
+.navBtn{padding:10px 4px;border:1px solid #4a3518;background:#1a1208;color:#9a8060;border-radius:4px;cursor:pointer;font-size:12px;text-align:center;line-height:1.4;flex-shrink:0;transition:all 0.2s;font-family:inherit}
+.navBtn:hover{background:#2a1f15;border-color:#8b6914;color:#d4c5a0}
+.navBtn.act{background:linear-gradient(135deg,#3a2a15 0%,#2a1f10 100%);border-color:#c9a84c;color:#e8c860;box-shadow:inset 0 0 12px rgba(201,168,76,0.2)}
+.navBtn .icon{display:block;font-size:18px;margin-bottom:2px}
+#contentArea{flex:1;padding:12px;overflow-y:auto;background:#0d0a08;min-width:0}
+#contentArea::-webkit-scrollbar{width:6px}
+#contentArea::-webkit-scrollbar-thumb{background:#5a4220;border-radius:3px}
+.panel{background:linear-gradient(180deg,#1a1208 0%,#150e06 100%);border:1px solid #5a4220;border-radius:6px;padding:16px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+.panel h3{color:#c9a84c;border-bottom:1px solid #4a3518;padding-bottom:8px;margin-bottom:12px;font-size:15px;display:flex;justify-content:space-between;align-items:center;letter-spacing:2px}
+.panel h3 .sub{color:#7a6040;font-size:11px;font-weight:normal;letter-spacing:0}
+button,.btn{padding:8px 16px;margin:3px;border:1px solid #5a4220;background:linear-gradient(180deg,#2a1f15 0%,#1a1208 100%);color:#b8945a;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;transition:all 0.15s;font-weight:bold}
+button:hover,.btn:hover{background:linear-gradient(180deg,#3a2a18 0%,#2a1f10 100%);border-color:#8b6914;color:#d4c5a0}
+button:active,.btn:active{transform:scale(0.97)}
+button.primary{background:linear-gradient(180deg,#6b4f1a 0%,#4a3510 100%);border-color:#c9a84c;color:#f0e0a0}
+button.primary:hover{box-shadow:0 0 12px rgba(201,168,76,0.4)}
+button.red{background:linear-gradient(180deg,#5a2020 0%,#3a1010 100%);border-color:#8a3030;color:#d88}
+button.green{background:linear-gradient(180deg,#2a4a2a 0%,#1a3a1a 100%);border-color:#4a7a4a;color:#8b8}
+button.gold{background:linear-gradient(180deg,#6b5a1a 0%,#4a3a10 100%);border-color:#a08a30;color:#e8d890}
+button:disabled{opacity:0.4;cursor:not-allowed}
+.faction-card{background:#120c04;border:1px solid #4a3518;border-radius:4px;padding:10px;margin-bottom:6px}
+.faction-card.warning{border-color:#a06a20}
+.faction-card.danger{border-color:#a03030}
+.faction-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.faction-name{font-size:13px;font-weight:bold;color:#c9a84c}
+.faction-bars{display:flex;flex-direction:column;gap:4px}
+.bar-row{display:flex;align-items:center;gap:6px}
+.bar-label{width:48px;font-size:10px;color:#7a6040;flex-shrink:0}
+.bar-track{flex:1;height:12px;background:#0a0604;border-radius:6px;overflow:hidden;border:1px solid #3a2810}
+.bar-fill{height:100%;border-radius:5px;transition:width 0.5s}
+.bar-fill.sat{background:linear-gradient(90deg,#4a6a8a,#6a8aba)}
+.bar-fill.inf{background:linear-gradient(90deg,#8a6a2a,#c9a84c)}
+.bar-fill.low{background:linear-gradient(90deg,#7a2a2a,#c44)!important}
+.bar-fill.high{background:linear-gradient(90deg,#7a2a2a,#c44)!important}
+.bar-value{width:40px;text-align:right;font-size:11px;font-weight:bold;flex-shrink:0}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal-overlay.hide{display:none}
+.modal{background:linear-gradient(180deg,#1a1208 0%,#0d0a08 100%);border:2px solid #8b6914;border-radius:8px;padding:24px;max-width:650px;width:92%;max-height:88vh;overflow-y:auto;box-shadow:0 0 48px rgba(139,105,20,0.4)}
+.modal h2{color:#e8c860;font-size:20px;margin-bottom:8px;text-align:center;letter-spacing:3px;border-bottom:1px solid #5a4220;padding-bottom:10px}
+.modal .mem-type{display:inline-block;background:#2a1f15;color:#c9a84c;padding:3px 12px;border-radius:12px;font-size:11px;margin-bottom:10px;border:1px solid #5a4220}
+.modal .mem-content{background:#120c04;border:1px solid #4a3518;border-radius:4px;padding:14px;margin-bottom:14px;line-height:1.9;color:#c4b080;font-size:13px;white-space:pre-line}
+.modal .mem-advisor{color:#9a8060;font-style:italic;margin-top:8px;padding-top:8px;border-top:1px dashed #3a2810;font-size:12px}
+.modal .options{display:flex;flex-direction:column;gap:8px}
+.option-btn{text-align:left;padding:12px 16px;background:#1a1208;border:1px solid #4a3518;border-radius:4px;cursor:pointer;transition:all 0.2s;font-family:inherit;color:#c4b080;font-size:13px;line-height:1.6}
+.option-btn:hover{background:#2a1f15;border-color:#8b6914;transform:translateX(4px)}
+.option-btn .opt-title{font-weight:bold;color:#d4a574;margin-bottom:4px}
+.option-btn .opt-effect{font-size:11px;color:#7a6040}
+#mapCanvas{width:100%;background:#0a0604;border:1px solid #4a3518;border-radius:4px;cursor:pointer}
+.map-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:#7a6040}
+.map-legend span{display:flex;align-items:center;gap:4px}
+.map-legend .dot{width:12px;height:12px;border-radius:2px;display:inline-block}
+.person-card{background:#120c04;border:1px solid #4a3518;border-radius:4px;padding:10px;margin-bottom:6px;display:flex;gap:10px;align-items:center;transition:all 0.2s}
+.person-card:hover{border-color:#8b6914;background:#1a1208}
+.person-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#3a2a15,#2a1f10);border:2px solid #5a4220;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.person-info{flex:1;min-width:0}
+.person-name{font-size:14px;font-weight:bold;color:#c9a84c}
+.person-title{font-size:11px;color:#7a6040}
+.person-stats{display:flex;gap:8px;margin-top:4px;font-size:10px;flex-wrap:wrap}
+.person-stat{color:#9a8060}
+.person-stat b{color:#d4a574}
+.log-panel{background:#0a0604;border:1px solid #4a3518;border-radius:4px;padding:8px;max-height:420px;overflow-y:auto}
+.log-panel::-webkit-scrollbar{width:4px}
+.log-panel::-webkit-scrollbar-thumb{background:#4a3518;border-radius:2px}
+.log-entry{padding:5px 8px;border-bottom:1px solid #1a1208;font-size:12px;line-height:1.6}
+.log-entry:last-child{border-bottom:none}
+.log-entry .log-time{color:#6a5030;font-size:10px;margin-right:6px}
+.log-entry.season{color:#d4a574;border-left:2px solid #d4a574;padding-left:8px}
+.log-entry.year{color:#e8c860;border-left:2px solid #e8c860;padding-left:8px;font-weight:bold}
+.log-entry.event{color:#c44;border-left:2px solid #c44;padding-left:8px}
+.log-entry.good{color:#8b8;border-left:2px solid #8b8;padding-left:8px}
+.log-entry.warn{color:#d88;border-left:2px solid #d88;padding-left:8px}
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ov-card{background:#120c04;border:1px solid #4a3518;border-radius:4px;padding:12px;text-align:center;transition:all 0.3s}
+.ov-card:hover{border-color:#8b6914;transform:translateY(-2px)}
+.ov-card .ov-label{color:#7a6040;font-size:11px;margin-bottom:4px}
+.ov-card .ov-value{color:#d4a574;font-size:22px;font-weight:bold}
+.ov-card .ov-desc{color:#6a5030;font-size:10px;margin-top:4px}
+.council-info{text-align:center;padding:16px}
+.council-info .big-icon{font-size:52px;margin-bottom:10px}
+.council-info h2{color:#e8c860;font-size:22px;margin-bottom:8px;letter-spacing:4px}
+.council-info p{color:#9a8060;font-size:13px;margin-bottom:14px;line-height:1.9}
+.council-status{display:flex;justify-content:center;gap:16px;margin:14px 0;flex-wrap:wrap}
+.cs-item{background:#120c04;border:1px solid #4a3518;border-radius:4px;padding:8px 14px;text-align:center}
+.cs-item l{display:block;color:#7a6040;font-size:10px}
+.cs-item s{color:#c9a84c;font-size:16px;font-weight:bold}
+.policy-tree{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.policy-node{background:#120c04;border:1px solid #4a3518;border-radius:4px;padding:10px;cursor:pointer;transition:all 0.2s}
+.policy-node:hover{border-color:#8b6914}
+.policy-node.unlocked{border-color:#6b8a4a;background:linear-gradient(180deg,#1a2a15,#121a0c)}
+.policy-node.locked{opacity:0.5}
+.policy-node .pn-name{font-size:13px;font-weight:bold;color:#c9a84c;margin-bottom:4px}
+.policy-node .pn-desc{font-size:11px;color:#7a6040;line-height:1.5}
+.policy-node .pn-cost{font-size:10px;color:#d4a574;margin-top:4px}
+.province-detail{background:#120c04;border:1px solid #4a3518;border-radius:4px;padding:14px;margin-top:10px}
+.province-detail h4{color:#c9a84c;font-size:15px;margin-bottom:8px}
+.pd-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:12px}
+.pd-item{display:flex;justify-content:space-between;padding:4px 8px;background:#0a0604;border-radius:3px}
+.pd-item l{color:#7a6040}
+.pd-item s{color:#d4a574;font-weight:bold}
+.ending-screen{text-align:center;padding:30px}
+.ending-screen .ending-icon{font-size:72px;margin-bottom:16px}
+.ending-screen h1{color:#e8c860;font-size:28px;margin-bottom:12px;letter-spacing:6px}
+.ending-screen .ending-desc{color:#c4b080;font-size:14px;line-height:2;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto}
+.ending-screen .ending-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+.view-tabs{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.view-tab{padding:4px 10px;font-size:11px;border:1px solid #4a3518;background:#120c04;color:#7a6040;border-radius:3px;cursor:pointer}
+.view-tab.act{background:#2a1f15;border-color:#8b6914;color:#d4a574}
+.hide{display:none!important}
+.text-center{text-align:center}
+.gold-text{color:#e8c860}
+.red-text{color:#c44}
+.green-text{color:#8b8}
+.small-text{font-size:11px;color:#7a6040}
+.save-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+@media(max-width:768px){
+  #topBar{padding:6px 10px}
+  #topBar .title{font-size:15px}
+  .stat-box{min-width:55px;padding:3px 6px;font-size:10px}
+  #sideNav{width:75px;padding:6px 4px}
+  .navBtn{padding:8px 2px;font-size:10px}
+  #contentArea{padding:8px}
+  .panel{padding:12px}
+  .modal{padding:16px;width:95%}
+  .overview-grid{grid-template-columns:repeat(2,1fr)}
+  .pd-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topBar">
+    <div class="title-area">
+      <span class="title">大明国策</span>
+      <span class="year" id="topYear">永乐元年</span>
+      <span class="season" id="topSeason">春</span>
+    </div>
+    <div class="stats" id="topStats"></div>
+  </div>
+  <div id="mainWrap">
+    <div id="sideNav">
+      <button class="navBtn act" data-panel="council"><span class="icon">📜</span>朝议</button>
+      <button class="navBtn" data-panel="map"><span class="icon">🗺️</span>天下</button>
+      <button class="navBtn" data-panel="people"><span class="icon">👥</span>群臣</button>
+      <button class="navBtn" data-panel="factions"><span class="icon">⚖️</span>势力</button>
+      <button class="navBtn" data-panel="policy"><span class="icon">📖</span>国策</button>
+      <button class="navBtn" data-panel="overview"><span class="icon">📊</span>概览</button>
+      <button class="navBtn" data-panel="log"><span class="icon">📝</span>起居注</button>
+    </div>
+    <div id="contentArea">
+      <div id="panel-council" class="panel-content">
+        <div class="panel">
+          <h3>朝堂议政 <span class="sub" id="councilSub">候旨</span></h3>
+          <div class="council-info" id="councilInfo">
+            <div class="big-icon">🏛️</div>
+            <h2 id="councilTitle">开启春季朝议</h2>
+            <p id="councilDesc">百官已集于奉天殿外，陛下可临朝听政。<br>本季必有若干奏折亟待批复。</p>
+            <div class="council-status" id="councilStatus"></div>
+            <button class="primary gold" id="btnStartCouncil" style="font-size:15px;padding:12px 36px">⚡ 临朝听政</button>
+          </div>
+        </div>
+      </div>
+      <div id="panel-map" class="panel-content hide">
+        <div class="panel">
+          <h3>天下舆图 <span class="sub" id="mapSub">两京十三省</span></h3>
+          <div class="view-tabs" id="mapViewTabs">
+            <span class="view-tab act" data-view="stability">稳定</span>
+            <span class="view-tab" data-view="population">人口</span>
+            <span class="view-tab" data-view="tax">税赋</span>
+            <span class="view-tab" data-view="food">粮产</span>
+            <span class="view-tab" data-view="military">驻军</span>
+          </div>
+          <canvas id="mapCanvas" width="800" height="500"></canvas>
+          <div class="map-legend" id="mapLegend"></div>
+          <div id="provinceDetail" class="province-detail hide"></div>
+        </div>
+      </div>
+      <div id="panel-people" class="panel-content hide">
+        <div class="panel">
+          <h3>在京群臣 <span class="sub" id="peopleSub">内阁六部</span></h3>
+          <div id="peopleList"></div>
+        </div>
+      </div>
+      <div id="panel-factions" class="panel-content hide">
+        <div class="panel">
+          <h3>五大势力 <span class="sub">消长制衡</span></h3>
+          <div id="factionList"></div>
+        </div>
+        <div class="panel">
+          <h3>制衡之道</h3>
+          <div style="font-size:12px;line-height:2.2;color:#9a8060">
+            <p>• <span class="gold-text">满意度</span>低于三十，势力心生怨望，恐生兵变、靖难、专权之祸</p>
+            <p>• <span style="color:#d4a574">影响力</span>高于七十，势力尾大不掉，威胁皇权与天命</p>
+            <p>• 每年文官影响力渐长，武将满意度渐降，宦官影响力渐增</p>
+            <p>• 平衡各方势力，方为长治久安之道</p>
+          </div>
+        </div>
+      </div>
+      <div id="panel-policy" class="panel-content hide">
+        <div class="panel">
+          <h3>国策宏图 <span class="sub" id="policySub">行政点: 0</span></h3>
+          <div class="policy-tree" id="policyTree"></div>
+        </div>
+      </div>
+      <div id="panel-overview" class="panel-content hide">
+        <div class="panel">
+          <h3>国家概览 <span class="sub" id="overviewSub">永乐元年 · 春</span></h3>
+          <div class="overview-grid" id="overviewGrid"></div>
+        </div>
+      </div>
+      <div id="panel-log" class="panel-content hide">
+        <div class="panel">
+          <h3>起居注 <span class="sub" id="logCount">共 0 条</span></h3>
+          <div class="log-panel" id="logPanel"></div>
+          <div class="save-bar">
+            <button class="green" id="btnSave">💾 存档</button>
+            <button class="primary" id="btnLoad">📂 读档</button>
+            <button class="red" id="btnReset">🔄 重启</button>
+            <button class="gold" id="btnExport">📤 导出</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay hide" id="memorialModal">
+  <div class="modal">
+    <div style="text-align:center;color:#7a6040;font-size:12px;margin-bottom:8px" id="memorialProgress">奏折 1 / 3</div>
+    <span class="mem-type" id="memorialType">灾荒</span>
+    <h2 id="memorialTitle">蝗灾肆虐</h2>
+    <div class="mem-content" id="memorialContent"></div>
+    <div class="options" id="memorialOptions"></div>
+  </div>
+</div>
+<div class="modal-overlay hide" id="alertModal">
+  <div class="modal" style="max-width:450px;text-align:center">
+    <h2 id="alertTitle">旨意</h2>
+    <div class="mem-content" id="alertContent" style="text-align:center;white-space:pre-line"></div>
+    <button class="primary" id="alertConfirm" style="padding:10px 36px">领旨</button>
+  </div>
+</div>
+<div class="modal-overlay hide" id="endingModal">
+  <div class="modal ending-screen">
+    <div class="ending-icon" id="endingIcon">👑</div>
+    <h1 id="endingTitle">永乐盛世</h1>
+    <div class="ending-desc" id="endingDesc"></div>
+    <div class="ending-stats" id="endingStats"></div>
+    <button class="primary gold" onclick="resetGame()" style="font-size:15px;padding:12px 36px">🔄 再开一局</button>
+  </div>
+</div>
+<script>
+const RULESET_ID="ming-guoce-v2.0";
+const SAVE_KEY="ming_guoce_v2_save";
+const ERA_NAMES=[{name:"洪武",start:1368},{name:"建文",start:1399},{name:"永乐",start:1403},{name:"洪熙",start:1425},{name:"宣德",start:1426},{name:"正统",start:1436},{name:"景泰",start:1450},{name:"天顺",start:1457},{name:"成化",start:1465},{name:"弘治",start:1488},{name:"正德",start:1506},{name:"嘉靖",start:1522}];
+const SEASONS=["春","夏","秋","冬"];
+const SEASON_ICONS=["🌸","☀️","🍂","❄️"];
+const FACTION_CONFIG=[
+  {id:"wen",name:"文官集团",icon:"📖",desc:"科举士人，执掌行政"},
+  {id:"wu",name:"武将集团",icon:"⚔️",desc:"军功贵族，统领兵马"},
+  {id:"zong",name:"宗室藩王",icon:"👑",desc:"皇室宗亲，分封各地"},
+  {id:"huan",name:"宦官集团",icon:"🏮",desc:"宫廷内侍，掌控情报"},
+  {id:"wai",name:"外戚集团",icon:"💎",desc:"后妃亲族，联结后宫"}
+];
+const PROVINCES=[
+  {id:"beizhili",name:"北直隶",x:520,y:140,pop:800,tax:120,food:90,mil:150,stab:75,capital:true},
+  {id:"nanzhili",name:"南直隶",x:560,y:280,pop:1200,tax:200,food:180,mil:80,stab:80,capital:true},
+  {id:"shandong",name:"山东",x:540,y:200,pop:700,tax:90,food:120,mil:100,stab:70},
+  {id:"shanxi",name:"山西",x:440,y:180,pop:500,tax:70,food:80,mil:120,stab:65},
+  {id:"henan",name:"河南",x:480,y:240,pop:650,tax:100,food:110,mil:90,stab:68},
+  {id:"shaanxi",name:"陕西",x:380,y:200,pop:450,tax:60,food:70,mil:140,stab:60},
+  {id:"sichuan",name:"四川",x:300,y:300,pop:600,tax:80,food:130,mil:70,stab:72},
+  {id:"huguang",name:"湖广",x:480,y:340,pop:700,tax:110,food:160,mil:60,stab:74},
+  {id:"jiangxi",name:"江西",x:540,y:340,pop:650,tax:100,food:120,mil:50,stab:76},
+  {id:"zhejiang",name:"浙江",x:600,y:320,pop:800,tax:150,food:110,mil:50,stab:78},
+  {id:"fujian",name:"福建",x:590,y:380,pop:400,tax:60,food:70,mil:40,stab:70},
+  {id:"guangdong",name:"广东",x:500,y:430,pop:350,tax:50,food:80,mil:40,stab:65},
+  {id:"guangxi",name:"广西",x:420,y:420,pop:250,tax:30,food:50,mil:50,stab:55},
+  {id:"yunnan",name:"云南",x:280,y:400,pop:200,tax:20,food:40,mil:60,stab:50},
+  {id:"guizhou",name:"贵州",x:360,y:380,pop:150,tax:15,food:30,mil:40,stab:48}
+];
+const FRONTIERS=[
+  {id:"liaodong",name:"辽东",x:640,y:100,men:300,drill:60,morale:65},
+  {id:"jizhou",name:"蓟州",x:560,y:110,men:250,drill:65,morale:70},
+  {id:"xuanfu",name:"宣府",x:480,y:120,men:280,drill:62,morale:68},
+  {id:"datong",name:"大同",x:420,y:130,men:260,drill:60,morale:65},
+  {id:"shanxi_bian",name:"山西",x:380,y:150,men:200,drill:55,morale:60},
+  {id:"yansui",name:"延绥",x:320,y:170,men:180,drill:55,morale:58},
+  {id:"ningxia",name:"宁夏",x:280,y:160,men:150,drill:50,morale:55},
+  {id:"guyuan",name:"固原",x:300,y:200,men:160,drill:52,morale:56},
+  {id:"gansu",name:"甘肃",x:220,y:180,men:140,drill:48,morale:52}
+];
+const PEOPLE=[
+  {id:"xiejin",name:"解缙",title:"内阁首辅",age:35,politics:88,military:30,wisdom:92,charm:75,faction:"wen",loyalty:70,health:80,ambition:60,alive:true},
+  {id:"yangshiqi",name:"杨士奇",title:"内阁次辅",age:39,politics:90,military:35,wisdom:95,charm:70,faction:"wen",loyalty:85,health:75,ambition:40,alive:true},
+  {id:"yangrong",name:"杨荣",title:"内阁群辅",age:33,politics:82,military:75,wisdom:88,charm:72,faction:"wen",loyalty:80,health:78,ambition:45,alive:true},
+  {id:"yangpu",name:"杨溥",title:"翰林院学士",age:32,politics:85,military:25,wisdom:90,charm:68,faction:"wen",loyalty:82,health:70,ambition:35,alive:true},
+  {id:"jianyi",name:"蹇义",title:"吏部尚书",age:40,politics:85,military:40,wisdom:80,charm:75,faction:"wen",loyalty:88,health:72,ambition:30,alive:true},
+  {id:"xia Yuanji",name:"夏原吉",title:"户部尚书",age:36,politics:88,military:35,wisdom:92,charm:70,faction:"wen",loyalty:90,health:75,ambition:25,alive:true},
+  {id:"luzhen",name:"吕震",title:"礼部尚书",age:42,politics:75,military:30,wisdom:70,charm:65,faction:"wen",loyalty:60,health:68,ambition:55,alive:true},
+  {id:"jinzhong",name:"金忠",title:"兵部尚书",age:45,politics:70,military:80,wisdom:78,charm:72,faction:"wu",loyalty:85,health:65,ambition:35,alive:true},
+  {id:"zhengci",name:"郑赐",title:"刑部尚书",age:50,politics:72,military:25,wisdom:75,charm:60,faction:"wen",loyalty:75,health:55,ambition:30,alive:true},
+  {id:"songli",name:"宋礼",title:"工部尚书",age:44,politics:78,military:50,wisdom:85,charm:65,faction:"wen",loyalty:82,health:70,ambition:40,alive:true},
+  {id:"zhenhe",name:"郑和",title:"司礼监太监",age:32,politics:70,military:75,wisdom:85,charm:80,faction:"huan",loyalty:95,health:80,ambition:50,alive:true},
+  {id:"wangjinghong",name:"王景弘",title:"御马监太监",age:30,politics:60,military:65,wisdom:72,charm:70,faction:"huan",loyalty:90,health:78,ambition:40,alive:true},
+  {id:"zhuneng",name:"朱能",title:"成国公·五军都督",age:37,politics:55,military:92,wisdom:70,charm:80,faction:"wu",loyalty:92,health:72,ambition:30,alive:true},
+  {id:"zhangfu",name:"张辅",title:"新城侯·征夷将军",age:28,politics:60,military:88,wisdom:75,charm:78,faction:"wu",loyalty:88,health:85,ambition:45,alive:true},
+  {id:"qiufu",name:"丘福",title:"淇国公·征虏大将军",age:55,politics:40,military:85,wisdom:55,charm:70,faction:"wu",loyalty:85,health:60,ambition:35,alive:true},
+  {id:"xuhou",name:"徐皇后",title:"中宫皇后",age:32,politics:75,military:20,wisdom:88,charm:90,faction:"wai",loyalty:95,health:78,ambition:20,alive:true}
+];
+const POLICIES=[
+  {id:"rest_with_people",name:"休养生息",desc:"减免赋税，鼓励垦荒，人口粮产渐增",cost:3,effect:{food:200,stability:5},unlocked:false,req:[]},
+  {id:"treasury_reform",name:"清丈田亩",desc:"清查隐田，整顿税基，国库收入大增",cost:5,effect:{treasury:3000},unlocked:false,req:["rest_with_people"]},
+  {id:"canal_repair",name:"疏浚运河",desc:"修通会通河，漕运畅通，南北物资流转",cost:6,effect:{treasury:1500,food:300,stability:3},unlocked:false,req:["treasury_reform"]},
+  {id:"capital_move",name:"营建北京",desc:"迁都北京，天子守国门，北边防务巩固",cost:10,effect:{stability:8,military:200,mandate:5},unlocked:false,req:["canal_repair"]},
+  {id:"military_academy",name:"整顿京营",desc:"操练五军三千神机三营，军力大振",cost:5,effect:{military:500,stability:3},unlocked:false,req:[]},
+  {id:"nine_frontier",name:"加固九边",desc:"修缮边墙墩台，九边防御稳固",cost:7,effect:{military:300,stability:5},unlocked:false,req:["military_academy"]},
+  {id:"western_voyages",name:"郑和下西洋",desc:"遣使远航，宣扬国威，万国来朝",cost:8,effect:{prestige:15,mandate:8,treasury:2000},unlocked:false,req:[]},
+  {id:"tribute_system",name:"重建朝贡",desc:"恢复市舶司，藩属朝贡，国库充实",cost:5,effect:{treasury:2500,prestige:8},unlocked:false,req:["western_voyages"]},
+  {id:"neo_confucian",name:"尊崇儒术",desc:"兴办儒学，科举取士，文官集团壮大",cost:4,effect:{stability:5,mandate:3},unlocked:false,req:[]},
+  {id:"legal_reform",name:"修纂大典",desc:"编修永乐大典，文治煌煌",cost:6,effect:{prestige:10,mandate:5,stability:3},unlocked:false,req:["neo_confucian"]},
+  {id:"eunuch_supervision",name:"宦官出使",desc:"委宦官以监军出使之权，皇权集中",cost:3,effect:{mandate:3},unlocked:false,req:[]},
+  {id:"secret_police",name:"设立东厂",desc:"宦官缉捕臣民，百官战栗，皇权独大",cost:5,effect:{mandate:5,stability:-3},unlocked:false,req:["eunuch_supervision"]}
+];
+const MEMORIALS=[
+  {id:"locust",type:"灾荒",typeColor:"#d4a574",title:"蝗灾肆虐",recommender:"夏原吉",content:"河南、山东两地突发蝗灾，蝗虫遮天蔽日，所过之处寸草不生。地方官急报朝廷，请求赈灾灭蝗。若不及时处理，恐引发民变。",advisor:"户部尚书夏原吉进言：「当开仓赈灾，以仁德安民心。蝗灾虽烈，民心不可失。」",options:[{text:"开仓赈灾，减免赋税",effect:{food:-800,stability:10,prestige:2,factions:{wen:8,wu:-2}},desc:"粮-800，稳定+10，威望+2"},{text:"征发徭役，组织灭蝗",effect:{food:-200,stability:-5,prestige:-3,factions:{wen:-5,wu:3}},desc:"粮-200，稳定-5，威望-3"},{text:"置之不理，听天由命",effect:{stability:-15,prestige:-5,factions:{wen:-10}},desc:"稳定-15，威望-5"}]},
+  {id:"yellow_river",type:"灾荒",typeColor:"#d4a574",title:"黄河决口",recommender:"宋礼",content:"黄河开封段决堤，洪水淹没数十州县，百姓流离失所者数以万计。河道总督请求拨银修堤，安置灾民。",advisor:"工部尚书宋礼进言：「黄河水患非同小可，需征调民夫、调拨钱粮，方能堵住决口。」",options:[{text:"拨银十万两，征夫修堤",effect:{treasury:-10000,food:-500,stability:8,prestige:3,factions:{wen:5}},desc:"银-10000，粮-500，稳定+8"},{text:"令地方自筹，朝廷派官督导",effect:{treasury:-2000,stability:-3,factions:{wen:-3,wu:2}},desc:"银-2000，稳定-3"},{text:"暂缓修堤，先核实灾情",effect:{stability:-8,prestige:-3,factions:{wen:-8}},desc:"稳定-8，威望-3"}]},
+  {id:"plague",type:"灾荒",typeColor:"#d4a574",title:"瘟疫流行",recommender:"太医院",content:"南方数省爆发瘟疫，患者发热咳血，死亡日众。太医院建议隔离疫区、分发药材，但需大量钱粮。",advisor:"太医院院判进言：「瘟疫传染极快，若不即刻隔离施药，恐蔓延至京师。」",options:[{text:"隔离疫区，太医院施药",effect:{treasury:-5000,stability:12,prestige:5,mandate:3,factions:{wen:5}},desc:"银-5000，稳定+12，天命+3"},{text:"令各地自行防疫",effect:{stability:-5,mandate:-3,factions:{wen:-5}},desc:"稳定-5，天命-3"},{text:"封锁疫区，任其自生自灭",effect:{stability:-15,mandate:-8,prestige:-5,factions:{wen:-10}},desc:"稳定-15，天命-8"}]},
+  {id:"drought",type:"灾荒",typeColor:"#d4a574",title:"北方大旱",recommender:"夏原吉",content:"北直隶、山西连续三月无雨，田地龟裂，麦苗枯死。百姓开始逃荒，地方官请求开仓放粮。",advisor:"户部尚书夏原吉进言：「仓中存粮有限，若尽数放赈，恐来年军粮无着。」",options:[{text:"开仓放粮，安抚灾民",effect:{food:-1000,stability:10,prestige:3,factions:{wen:6}},desc:"粮-1000，稳定+10"},{text:"从南方调粮，平价出售",effect:{treasury:-3000,food:-300,stability:5,factions:{wen:3}},desc:"银-3000，粮-300，稳定+5"},{text:"令灾民就地自救",effect:{stability:-10,prestige:-3,factions:{wen:-8}},desc:"稳定-10，威望-3"}]},
+  {id:"earthquake",type:"灾荒",typeColor:"#d4a574",title:"陕西地震",recommender:"钦天监",content:"陕西华州发生大地震，声如雷鸣，城垣房屋倒塌无数，军民死伤甚众。余震不断，人心惶惶。",advisor:"钦天监正进言：「地震乃上天示警，陛下当修德省刑，以回天意。」",options:[{text:"拨款赈灾，减免赋税",effect:{treasury:-8000,food:-600,stability:10,mandate:5,prestige:3,factions:{wen:5}},desc:"银-8000，稳定+10，天命+5"},{text:"下罪己诏，大赦天下",effect:{mandate:8,prestige:5,stability:3,factions:{wen:3,huan:-3}},desc:"天命+8，威望+5"},{text:"仅派官慰问，不拨钱粮",effect:{stability:-8,mandate:-3,factions:{wen:-5}},desc:"稳定-8，天命-3"}]},
+  {id:"tatar_raid",type:"军事",typeColor:"#c44",title:"鞑靼犯边",recommender:"金忠",content:"鞑靼骑兵大举入寇宣府、大同，杀掠军民数万，边将告急。朝廷需决策是战是和。",advisor:"兵部尚书金忠进言：「鞑靼欺我边防松弛，当遣名将率京营精锐驰援，痛击来犯之敌。」",options:[{text:"遣将出征，痛击鞑靼",effect:{treasury:-5000,military:500,stability:5,prestige:8,factions:{wu:10,wen:-3}},desc:"银-5000，军力+500，威望+8"},{text:"坚壁清野，固守待援",effect:{military:-200,stability:-3,prestige:-2,factions:{wu:-5}},desc:"军力-200，稳定-3"},{text:"遣使议和，许以互市",effect:{treasury:-3000,prestige:-5,stability:3,factions:{wu:-8,wen:3}},desc:"银-3000，威望-5"}]},
+  {id:"wokou",type:"军事",typeColor:"#c44",title:"倭寇劫掠",recommender:"浙江巡抚",content:"东南沿海倭寇猖獗，联合海盗劫掠州县，烧杀掳掠无恶不作。当地卫所兵力不足，难以抵御。",advisor:"浙江巡抚进言：「倭寇实为沿海奸民勾结日本浪人，当严海禁、练乡兵、遣名将剿之。」",options:[{text:"遣名将练兵剿倭",effect:{treasury:-6000,military:300,stability:8,prestige:5,factions:{wu:8,wen:2}},desc:"银-6000，军力+300，稳定+8"},{text:"严行海禁，断绝接济",effect:{treasury:-2000,stability:-3,prestige:2,factions:{wen:3,wu:-3}},desc:"银-2000，稳定-3"},{text:"招抚倭寇，授以官职",effect:{stability:-5,prestige:-8,mandate:-3,factions:{wu:-5,wen:-5}},desc:"稳定-5，威望-8"}]},
+  {id:"tusi_rebellion",type:"军事",typeColor:"#c44",title:"土司叛乱",recommender:"张辅",content:"云南、贵州土司不服改土归流，联合起兵叛乱，攻城掠地。地方官军节节败退，请求朝廷增援。",advisor:"征夷将军张辅进言：「土司反复无常，当以大兵压境，剿抚并用，方能一劳永逸。」",options:[{text:"调集大军，武力平叛",effect:{treasury:-8000,military:-300,stability:5,prestige:6,factions:{wu:8,wen:-2}},desc:"银-8000，军力-300，威望+6"},{text:"招抚为主，许以世袭",effect:{stability:3,prestige:-3,factions:{wen:5,wu:-5}},desc:"稳定+3，威望-3"},{text:"暂缓改土归流，恢复旧制",effect:{stability:5,mandate:-5,prestige:-5,factions:{wen:3,wu:-8}},desc:"稳定+5，天命-5"}]},
+  {id:"border_pay",type:"军事",typeColor:"#c44",title:"边军缺饷",recommender:"丘福",content:"九边军镇因朝廷拖欠军饷，士兵怨声载道，已有数个卫所发生哗变苗头。边将急请拨发欠饷。",advisor:"淇国公丘福进言：「军饷拖欠已久，若不即刻补发，恐生兵变。届时损失远大于所欠军饷。」",options:[{text:"即刻拨发全部欠饷",effect:{treasury:-12000,military:200,stability:5,factions:{wu:12}},desc:"银-12000，军力+200"},{text:"补发一半，其余秋后再给",effect:{treasury:-6000,military:-100,stability:-3,factions:{wu:3}},desc:"银-6000，军力-100"},{text:"严查贪腐，以贪官家产充饷",effect:{treasury:3000,stability:3,mandate:3,factions:{wu:5,wen:-8,huan:-3}},desc:"银+3000，天命+3"}]},
+  {id:"drill_troops",type:"军事",typeColor:"#c44",title:"京营操练",recommender:"朱能",content:"成国公朱能奏报：京营五军、三千、神机三营久疏战阵，操练度不足。请求拨银举行大阅，整饬军备。",advisor:"五军都督朱能进言：「兵可百年不用，不可一日无备。京营乃朝廷根本，当勤加操练。」",options:[{text:"拨银大阅，整饬京营",effect:{treasury:-3000,military:300,factions:{wu:8}},desc:"银-3000，军力+300"},{text:"令各营自行操练",effect:{military:50,factions:{wu:2}},desc:"军力+50"},{text:"国库紧张，暂缓操练",effect:{military:-50,factions:{wu:-5}},desc:"军力-50"}]},
+  {id:"recommend",type:"政治",typeColor:"#6a8aba",title:"举荐贤才",recommender:"蹇义",content:"吏部尚书蹇义举荐数名贤才，称其德才兼备，可堪大用。但其中有人与某些派系关系密切，任用需谨慎。",advisor:"吏部尚书蹇义进言：「治国之道，首在得人。此数人皆一时之选，陛下当破格任用。」",options:[{text:"全部任用，委以要职",effect:{stability:5,mandate:2,factions:{wen:8,huan:-3}},desc:"稳定+5，天命+2"},{text:"择优录用，平衡各派",effect:{stability:3,factions:{wen:3,wu:2,huan:2,wai:2}},desc:"稳定+3，各势力+2"},{text:"搁置不议，日后再说",effect:{factions:{wen:-5}},desc:"文官-5"}]},
+  {id:"exam_fraud",type:"政治",typeColor:"#6a8aba",title:"科场舞弊",recommender:"都察院",content:"会试爆出舞弊案，有人举报主考官收受贿赂、泄露试题。舆论哗然，举子们群情激愤。",advisor:"都察院左都御史进言：「科场乃国家取士大典，舞弊之事不可不查。当彻查严办，以正士风。」",options:[{text:"彻查严办，涉事者严惩",effect:{mandate:5,stability:3,prestige:5,factions:{wen:-5,huan:3}},desc:"天命+5，威望+5"},{text:"从轻发落，仅废涉事举人",effect:{stability:-3,prestige:-3,factions:{wen:3}},desc:"稳定-3，威望-3"},{text:"压下此事，不予追究",effect:{stability:-8,mandate:-5,prestige:-8,factions:{wen:-3,huan:5}},desc:"稳定-8，天命-5"}]},
+  {id:"corruption",type:"政治",typeColor:"#6a8aba",title:"官员贪污",recommender:"都察院",content:"御史弹劾某布政使贪污受贿、鱼肉百姓，证据确凿。该官员与朝中某重臣关系密切，处理起来投鼠忌器。",advisor:"刑部尚书郑赐进言：「法不阿贵，绳不挠曲。贪污之官当严惩，以儆效尤。」",options:[{text:"革职查办，抄没家产",effect:{treasury:5000,mandate:5,stability:5,prestige:3,factions:{wen:-5,huan:3}},desc:"银+5000，天命+5"},{text:"贬官外放，留其性命",effect:{stability:2,factions:{wen:2}},desc:"稳定+2"},{text:"不予追究，暗中警告",effect:{stability:-5,mandate:-3,factions:{wen:3,huan:-3}},desc:"稳定-5，天命-3"}]},
+  {id:"eunuch_power",type:"政治",typeColor:"#6a8aba",title:"宦官干政",recommender:"解缙",content:"有太监依仗陛下信任，干预朝政、收受贿赂，朝臣多有不满。内阁联名上书，请求抑制宦官权势。",advisor:"内阁首辅解缙进言：「宦官干政，自古为祸。陛下当远小人、亲贤臣，以保社稷长治久安。」",options:[{text:"严惩涉案宦官，抑制司礼监",effect:{mandate:3,stability:5,factions:{wen:8,huan:-10}},desc:"天命+3，稳定+5"},{text:"稍加惩戒，保留宦官势力",effect:{factions:{wen:3,huan:-3}},desc:"文官+3，宦官-3"},{text:"信任宦官，斥责上书朝臣",effect:{stability:-5,mandate:-3,factions:{wen:-8,huan:8}},desc:"稳定-5，天命-3"}]},
+  {id:"relative_interfere",type:"政治",typeColor:"#6a8aba",title:"外戚干政",recommender:"都察院",content:"皇后之弟仗着国舅身份，横行霸道、强占民田，百姓怨声载道。朝臣投鼠忌器，无人敢弹劾。",advisor:"都察院御史进言：「外戚虽亲，然犯法当与庶民同罪。若不惩治，恐开外戚干政之端。」",options:[{text:"依法惩治，削夺爵位",effect:{stability:5,mandate:3,prestige:3,factions:{wai:-8,wen:5}},desc:"稳定+5，天命+3"},{text:"训诫一番，令其退田",effect:{stability:2,factions:{wai:-3}},desc:"稳定+2，外戚-3"},{text:"袒护国舅，压下此事",effect:{stability:-8,mandate:-5,factions:{wai:5,wen:-5}},desc:"稳定-8，天命-5"}]},
+  {id:"xiejin_arrogance",type:"政治",typeColor:"#6a8aba",title:"解缙恃才",recommender:"都察院",content:"内阁首辅解缙恃才傲物，在朝中得罪多人。有人弹劾其泄露宫中机密、结交藩王。解缙乃大才，处置需慎。",advisor:"吏部尚书蹇义进言：「解缙才高八斗，然性情刚傲。若严惩，恐失大才；若纵容，恐开坏例。」",options:[{text:"贬官外放，以示惩戒",effect:{factions:{wen:-5,huan:3},stability:2},desc:"文官-5，稳定+2"},{text:"好言规劝，留任内阁",effect:{factions:{wen:5,huan:-3}},desc:"文官+5，宦官-3"},{text:"下狱论罪，以正朝纲",effect:{mandate:-3,stability:-3,factions:{wen:-8,huan:5}},desc:"天命-3，文官-8"}]},
+  {id:"sea_ban",type:"经济",typeColor:"#8b8",title:"开海之议",recommender:"夏原吉",content:"东南商贾联名上书，请求开放海禁，允许民间出海贸易。称可增加税收、互通有无。但朝中多有反对之声。",advisor:"户部尚书夏原吉进言：「海禁一开，虽可增税，然恐引倭寇、通海外。利弊参半，陛下圣裁。」",options:[{text:"开放海禁，设市舶司收税",effect:{treasury:5000,stability:3,prestige:2,factions:{wen:3,wu:-3}},desc:"银+5000，稳定+3"},{text:"维持海禁，不许片板下海",effect:{stability:2,factions:{wu:3,wen:-3}},desc:"稳定+2，武将+3"},{text:"部分开放，仅允许朝贡贸易",effect:{treasury:2000,stability:2,factions:{wen:2}},desc:"银+2000，稳定+2"}]},
+  {id:"silver_mine",type:"经济",typeColor:"#8b8",title:"发现银矿",recommender:"宋礼",content:"云南报发现大型银矿，储量丰富。若开采可大幅增加国库收入，但需投入大量人力物力，且可能引发地方动荡。",advisor:"工部尚书宋礼进言：「银矿乃天授之财，开采可充国库、便民用。然需妥善管理，防止官商勾结。」",options:[{text:"官办开采，设银场大使",effect:{treasury:8000,stability:-3,factions:{wen:3,huan:2}},desc:"银+8000，稳定-3"},{text:"招商承办，官府抽成",effect:{treasury:5000,stability:2,factions:{wen:5}},desc:"银+5000，稳定+2"},{text:"封禁银矿，不许开采",effect:{stability:3,mandate:2,factions:{wen:-3}},desc:"稳定+3，天命+2"}]},
+  {id:"bank_run",type:"经济",typeColor:"#8b8",title:"钱庄挤兑",recommender:"夏原吉",content:"京城最大钱庄因传言资金链断裂，引发挤兑风潮。若钱庄倒闭，可能波及整个京城金融秩序，甚至影响朝廷税收。",advisor:"户部侍郎进言：「钱庄虽为民间所办，然与官员商贾多有往来。若倒闭恐引发连锁反应，朝廷是否出手相救？」",options:[{text:"国库注资，稳定金融",effect:{treasury:-10000,stability:8,prestige:3,factions:{wen:5,wai:3}},desc:"银-10000，稳定+8"},{text:"令钱庄自行筹措，官府仅维稳",effect:{stability:-3,factions:{wen:-3}},desc:"稳定-3"},{text:"坐视不管，任其倒闭",effect:{stability:-10,treasury:-2000,factions:{wen:-5,wai:-5}},desc:"稳定-10，银-2000"}]},
+  {id:"canal_silt",type:"经济",typeColor:"#8b8",title:"漕运淤塞",recommender:"宋礼",content:"大运河多处淤塞，漕船通行困难，南方粮食难以北运。京师粮食供应开始紧张，粮价上涨。",advisor:"工部尚书宋礼进言：「运河乃国家命脉，淤塞不通则京师震动。当征调民夫、调拨钱粮，疏浚河道。」",options:[{text:"征调十万民夫，全面疏浚",effect:{treasury:-15000,food:500,stability:5,prestige:5,factions:{wen:5}},desc:"银-15000，粮+500"},{text:"重点疏通关键河段",effect:{treasury:-6000,food:200,stability:2,factions:{wen:3}},desc:"银-6000，粮+200"},{text:"改走海运，暂不理会运河",effect:{food:-300,stability:-3,factions:{wen:-5,wu:3}},desc:"粮-300，稳定-3"}]},
+  {id:"treasury_empty",type:"经济",typeColor:"#8b8",title:"国库空虚",recommender:"夏原吉",content:"户部尚书夏原吉急奏：国库存银已不足万两，而各项开支浩繁，军饷、俸禄、赈灾皆需银两。若不设法开源，国库将告罄。",advisor:"户部尚书夏原吉进言：「国库空虚，非开源不可。可加征赋税，亦可削减开支，还可清查隐田。」",options:[{text:"加征赋税，充实国库",effect:{treasury:5000,stability:-8,factions:{wen:-5,wu:-3}},desc:"银+5000，稳定-8"},{text:"削减开支，裁撤冗员",effect:{treasury:2000,stability:-3,factions:{wen:-8}},desc:"银+2000，文官-8"},{text:"清查隐田，追缴欠税",effect:{treasury:4000,stability:-2,factions:{wen:-3,huan:2}},desc:"银+4000，稳定-2"}]},
+  {id:"korea_tribute",type:"外交",typeColor:"#7ec8ff",title:"朝鲜来贡",recommender:"吕震",content:"朝鲜国王遣使来朝，进贡方物，并请求册封。使节态度恭顺，带来大量人参、布匹等贡品。",advisor:"礼部尚书吕震进言：「朝鲜乃我大明藩属，世代恭顺。当厚待来使，册封国王，以彰天朝上国之德。」",options:[{text:"厚待来使，册封国王，回赐丰厚",effect:{treasury:-3000,prestige:10,mandate:5,factions:{wen:5}},desc:"银-3000，威望+10，天命+5"},{text:"按例接待，回赐从简",effect:{prestige:3,factions:{wen:2}},desc:"威望+3"},{text:"拒之门外，不予接见",effect:{prestige:-8,mandate:-3,factions:{wen:-5}},desc:"威望-8，天命-3"}]},
+  {id:"olat_peace",type:"外交",typeColor:"#7ec8ff",title:"瓦剌求和",recommender:"金忠",content:"瓦剌遣使求和，请求互市通好。但瓦剌反复无常，此前多次降而复叛。朝中主战主和争论不休。",advisor:"兵部尚书金忠进言：「瓦剌乃虎狼之邦，求和不过是喘息之计。然连年征战，国库空虚，百姓疲敝。和战之间，陛下圣裁。」",options:[{text:"许以互市，册封其王",effect:{treasury:2000,military:-100,stability:5,prestige:-3,factions:{wen:5,wu:-8}},desc:"银+2000，稳定+5，威望-3"},{text:"拒绝求和，整军备战",effect:{treasury:-3000,military:200,prestige:5,factions:{wu:8,wen:-3}},desc:"银-3000，军力+200，威望+5"},{text:"拖延不答，静观其变",effect:{factions:{wen:-2,wu:-2}},desc:"各势力-2"}]},
+  {id:"japan_envoy",type:"外交",typeColor:"#7ec8ff",title:"日本遣使",recommender:"吕震",content:"日本国王遣使来朝，请求册封并开展勘合贸易。但倭寇问题尚未解决，朝中对日本多有戒心。",advisor:"礼部官员进言：「日本虽为海外岛国，然慕化来朝，当以礼相待。册封贸易可羁縻之，减少倭患。」",options:[{text:"册封日本国王，许以勘合贸易",effect:{treasury:3000,prestige:5,stability:3,factions:{wen:5,wu:-3}},desc:"银+3000，威望+5"},{text:"仅许贸易，不予册封",effect:{treasury:1500,prestige:2,factions:{wen:3}},desc:"银+1500，威望+2"},{text:"驱逐来使，断绝往来",effect:{prestige:-5,stability:-3,factions:{wen:-5,wu:3}},desc:"威望-5，稳定-3"}]},
+  {id:"annam_tribute",type:"外交",typeColor:"#7ec8ff",title:"安南来贡",recommender:"吕震",content:"安南（今越南）遣使来朝，进贡方物。但安南国内局势不稳，权臣黎氏篡夺陈氏王位，请求大明册封。",advisor:"礼部尚书吕震进言：「安南乃我大明藩属，然其国内篡逆，若册封则承认篡逆，不封则恐生边患。」",options:[{text:"承认黎氏，册封安南国王",effect:{prestige:-5,mandate:-3,treasury:1000,factions:{wen:3}},desc:"银+1000，威望-5，天命-3"},{text:"拒绝册封，支持陈氏复国",effect:{prestige:5,mandate:3,military:-200,factions:{wu:5,wen:-3}},desc:"威望+5，军力-200"},{text:"搁置不议，维持现状",effect:{factions:{wen:-2}},desc:"文官-2"}]},
+  {id:"prince_enfeoff",type:"宗室",typeColor:"#e8c860",title:"藩王请封",recommender:"宗人府",content:"某位皇叔请求增加封地、扩大护卫。其理由是边防需要，然朝中多有议论，恐其势力过大威胁朝廷。",advisor:"宗人府宗令进言：「藩王封地护卫皆有定制，不可随意增加。然皇叔乃至亲，驳回恐伤亲情。」",options:[{text:"准其所请，增加封地护卫",effect:{stability:-3,mandate:-5,factions:{zong:8,wen:-5,wu:-3}},desc:"稳定-3，天命-5，宗室+8"},{text:"按祖制驳回，好言安抚",effect:{stability:3,mandate:3,factions:{zong:-5,wen:5}},desc:"稳定+3，天命+3，宗室-5"},{text:"削减其现有封地，以示惩戒",effect:{stability:-5,mandate:3,factions:{zong:-10,wen:3}},desc:"稳定-5，宗室-10"}]},
+  {id:"prince_rebel",type:"宗室",typeColor:"#e8c860",title:"藩王不臣",recommender:"锦衣卫",content:"有藩王暗中招兵买马、私制兵器，似有不臣之心。地方官密报朝廷，请求定夺。若处理不当，恐引发靖难之祸。",advisor:"兵部尚书金忠进言：「藩王有异志，当先发制人。然需证据确凿，否则恐激成大变。」",options:[{text:"密令擒拿，废为庶人",effect:{stability:-5,mandate:5,factions:{zong:-10,wen:3,wu:3}},desc:"天命+5，宗室-10"},{text:"削减护卫，调离封地",effect:{stability:3,factions:{zong:-5,wen:3}},desc:"稳定+3，宗室-5"},{text:"佯装不知，暗中监视",effect:{stability:-8,mandate:-3,factions:{zong:3,wen:-3}},desc:"稳定-8，天命-3"}]},
+  {id:"concubine_request",type:"宗室",typeColor:"#e8c860",title:"后妃请托",recommender:"徐皇后",content:"宠妃在陛下耳边吹风，请求为其父亲升官、为其兄弟谋差事。此事虽小，然开了后宫干政的头，后患无穷。",advisor:"徐皇后进言：「后宫不得干政乃祖制。陛下若允其所请，恐开外戚干政之端。」",options:[{text:"拒绝所请，重申后宫不得干政",effect:{mandate:3,stability:3,factions:{wai:-5,wen:5}},desc:"天命+3，稳定+3，外戚-5"},{text:"酌情安排，不给要职",effect:{factions:{wai:3,wen:-3}},desc:"外戚+3，文官-3"},{text:"满口答应，大加封赏",effect:{stability:-5,mandate:-5,factions:{wai:8,wen:-8}},desc:"稳定-5，天命-5，外戚+8"}]},
+  {id:"empress_ill",type:"宗室",typeColor:"#e8c860",title:"皇后病重",recommender:"太医院",content:"徐皇后病重，太医院束手无策。皇后贤德，与陛下情深意重。若皇后薨逝，后宫空虚，外戚势力亦将受影响。",advisor:"太医院院判进言：「皇后凤体违和，药石罔效。陛下当做好准备，后事需早安排。」",options:[{text:"广征名医，重金悬赏",effect:{treasury:-3000,mandate:2,factions:{wai:5}},desc:"银-3000，外戚+5"},{text:"亲临探视，悉心照料",effect:{mandate:3,stability:2,factions:{wai:3}},desc:"天命+3，稳定+2"},{text:"忙于朝政，遣人探视",effect:{factions:{wai:-5}},desc:"外戚-5"}]},
+  {id:"mars",type:"特殊",typeColor:"#a060e0",title:"荧惑守心",recommender:"钦天监",content:"钦天监奏报：荧惑（火星）逆行，守于心宿，此为大凶之兆，主帝王有灾、天下大乱。朝野震动，人心惶惶。",advisor:"钦天监正进言：「荧惑守心，上天示警。陛下当修德省刑、大赦天下，以禳此灾。」",options:[{text:"下罪己诏，大赦天下，避殿修省",effect:{mandate:10,stability:8,prestige:5,factions:{wen:5,huan:-3}},desc:"天命+10，稳定+8，威望+5"},{text:"祭祀天地，祈求消灾",effect:{mandate:3,treasury:-2000,factions:{wen:2}},desc:"天命+3，银-2000"},{text:"不信灾异，照常理政",effect:{mandate:-8,stability:-5,prestige:-3,factions:{wen:-5}},desc:"天命-8，稳定-5"}]},
+  {id:"auspicious",type:"特殊",typeColor:"#a060e0",title:"祥瑞降临",recommender:"礼部",content:"地方官奏报：某地发现嘉禾（一茎多穗）、白鹿、灵芝等祥瑞，称是陛下圣德感天，天降祥瑞。群臣纷纷称贺。",advisor:"礼部尚书吕震进言：「祥瑞乃上天嘉奖，当布告天下，举行大典，以彰圣德。」",options:[{text:"举行大典，布告天下，大宴群臣",effect:{mandate:5,prestige:8,treasury:-5000,stability:3,factions:{wen:5}},desc:"天命+5，威望+8，银-5000"},{text:"谦逊不受，仅告太庙",effect:{mandate:3,prestige:3,factions:{wen:3}},desc:"天命+3，威望+3"},{text:"斥为虚妄，严惩献瑞官员",effect:{mandate:-3,prestige:-5,factions:{wen:-8}},desc:"天命-3，威望-5"}]},
+  {id:"emperor_ill",type:"特殊",typeColor:"#a060e0",title:"龙体违和",recommender:"太医院",content:"陛下偶感风寒，连日不愈，无法上朝理政。朝中人心浮动，有人建议由太子监国，有人建议由内阁辅政，宦官也想趁机揽权。",advisor:"太医院院判进言：「陛下龙体违和，当静心休养。朝政可暂交太子与内阁处理。」",options:[{text:"令太子监国，内阁辅政",effect:{stability:5,mandate:3,factions:{wen:5,zong:3,huan:-5}},desc:"稳定+5，天命+3"},{text:"抱病上朝，亲自理政",effect:{stability:-3,mandate:-5,military:-100,factions:{wen:-3,huan:3}},desc:"稳定-3，天命-5"},{text:"委政于司礼监，安心养病",effect:{stability:-5,mandate:-3,factions:{huan:8,wen:-8}},desc:"稳定-5，宦官+8"}]},
+  {id:"palace_fire",type:"特殊",typeColor:"#a060e0",title:"宫中失火",recommender:"锦衣卫",content:"深夜宫中失火，烧毁数座宫殿，所幸扑救及时，未造成重大伤亡。但修缮宫殿需大量银两，且有人怀疑是人为纵火。",advisor:"锦衣卫指挥使进言：「宫中失火，事有蹊跷。臣怀疑有人蓄意纵火，请陛下准许彻查。」",options:[{text:"拨银修缮，彻查纵火者",effect:{treasury:-8000,stability:3,factions:{huan:5,wen:-3}},desc:"银-8000，稳定+3"},{text:"拨银修缮，不再追查",effect:{treasury:-5000,stability:2,factions:{wen:3}},desc:"银-5000，稳定+2"},{text:"暂缓修缮，厉行节俭",effect:{treasury:1000,mandate:3,stability:-2,factions:{wen:5,huan:-3}},desc:"银+1000，天命+3"}]},
+  {id:"zhenhe_voyage",type:"航海",typeColor:"#7ec8ff",title:"郑和请命下西洋",recommender:"郑和",content:"司礼监太监郑和请命：愿率船队远航西洋，宣扬大明国威，结交海外诸国，兼采办海外奇珍。但远航耗费巨大，朝中多有反对。",advisor:"郑和进言：「奴才愿为陛下效犬马之劳，率船队远航，使万国来朝，扬我大明天威！」",options:[{text:"准奏！组建庞大船队下西洋",effect:{treasury:-10000,prestige:15,mandate:8,factions:{huan:8,wen:-5}},desc:"银-10000，威望+15，天命+8"},{text:"组建小型船队，试探远航",effect:{treasury:-4000,prestige:6,mandate:3,factions:{huan:5,wen:-2}},desc:"银-4000，威望+6"},{text:"国库紧张，暂缓远航",effect:{factions:{huan:-5,wen:3}},desc:"宦官-5，文官+3"}]},
+  {id:"xiejin_encyclopedia",type:"文治",typeColor:"#6a8aba",title:"解缙请修大典",recommender:"解缙",content:"内阁首辅解缙奏请：编纂一部包罗万象的大类书，收录古今典籍，以彰文治之盛。此即后世所称《永乐大典》。但工程浩大，需大量人力财力。",advisor:"解缙进言：「陛下，若能修成此大典，必将流芳百世，成为千古未有之文治盛事！」",options:[{text:"准奏！命解缙总纂，广招天下文士",effect:{treasury:-8000,prestige:12,mandate:6,stability:3,factions:{wen:10}},desc:"银-8000，威望+12，天命+6"},{text:"规模减半，量力而行",effect:{treasury:-4000,prestige:6,mandate:3,factions:{wen:5}},desc:"银-4000，威望+6"},{text:"国库紧张，暂缓修书",effect:{factions:{wen:-8}},desc:"文官-8"}]},
+  {id:"capital_move_plan",type:"营建",typeColor:"#d4a574",title:"营建北京之议",recommender:"丘福",content:"淇国公丘福等武将奏请：营建北京宫殿，准备迁都。北京乃陛下龙兴之地，且北控蒙古，天子守国门，可固边防。但营建耗费巨大，百姓劳苦。",advisor:"丘福进言：「北京地势雄伟，北控边塞，南制中原。迁都北京，天子守国门，可永固北疆！」",options:[{text:"准奏！大规模营建北京宫殿",effect:{treasury:-15000,food:-1000,stability:-3,military:200,mandate:5,factions:{wu:8,wen:-5}},desc:"银-15000，军力+200，天命+5"},{text:"先修城墙，宫殿缓建",effect:{treasury:-6000,stability:2,military:100,factions:{wu:5}},desc:"银-6000，军力+100"},{text:"国库紧张，暂缓迁都之议",effect:{factions:{wu:-5,wen:3}},desc:"武将-5，文官+3"}]},
+  {id:"zhangfu_annam",type:"军事",typeColor:"#c44",title:"张辅请征安南",recommender:"张辅",content:"征夷将军张辅请命：安南黎氏篡逆，暴虐无道，且屡犯边境。愿率大军南征，平定安南，郡县其地。",advisor:"张辅进言：「末将愿率精兵南下，一举平定安南，为陛下开疆拓土！」",options:[{text:"准奏！命张辅率大军南征",effect:{treasury:-12000,military:-400,prestige:10,mandate:5,factions:{wu:10,wen:-3}},desc:"银-12000，军力-400，威望+10"},{text:"先遣使谴责，观其动静",effect:{prestige:2,factions:{wu:-3,wen:3}},desc:"威望+2"},{text:"劳民伤财，不宜远征",effect:{factions:{wu:-8,wen:5}},desc:"武将-8，文官+5"}]}
+];
+const THRESHOLD_EVENTS={
+  wu_low:{title:"武将兵变",content:"武将集团因长期不满，煽动边军哗变，局势危急！",effect:{stability:-15,military:-500,mandate:-10,prestige:-10}},
+  zong_low:{title:"藩王靖难",content:"宗室藩王以「清君侧」为名起兵叛乱，天下震动！",effect:{stability:-20,military:-800,mandate:-15,prestige:-15,treasury:-10000}},
+  huan_high:{title:"宦官专权",content:"宦官集团权势滔天，开始把持朝政、迫害忠良！",effect:{stability:-10,mandate:-10,prestige:-8,factions:{wen:-10}}},
+  wai_high:{title:"外戚干政",content:"外戚集团把持要职，安插亲信，朝政日非！",effect:{stability:-8,mandate:-8,prestige:-5,factions:{wen:-8}}},
+  wen_high:{title:"文官结党",content:"文官集团结党营私，互相攻讦，架空皇权！",effect:{stability:-5,mandate:-5,factions:{huan:-5}}}
+};
+const ENDINGS={
+  yongle_heyday:{icon:"🌟",title:"永乐盛世",desc:"陛下励精图治，文治武功皆达鼎盛。万国来朝，四海升平，史称「永乐盛世」，流芳百世！"},
+  renxuan_zhi:{icon:"📖",title:"仁宣之治",desc:"陛下稳健守成，与民休息，政治清明，经济繁荣。虽无开疆拓土之功，然百姓安乐，堪称治世。"},
+  tumu_crisis:{icon:"⚔️",title:"土木之变",desc:"北疆军力废弛，鞑靼大举入侵，京师震动。虽未亡国，然国势由盛转衰，令人扼腕。"},
+  eunuch_dictatorship:{icon:"🏮",title:"宦官专权",desc:"宦官势力尾大不掉，最终把持朝政，皇帝沦为傀儡。大明王朝名存实亡，进入黑暗时代。"},
+  civil_dominance:{icon:"📜",title:"文官独大",desc:"文官集团结党营私，架空皇权，皇帝成为橡皮图章。党争不休，朝政日非，国势渐衰。"},
+  jingnan_2:{icon:"👑",title:"二次靖难",desc:"宗室藩王势力过大，最终起兵叛乱，重演靖难之役。天下大乱，生灵涂炭，王朝更迭。"},
+  fall:{icon:"💀",title:"国破家亡",desc:"天命已尽，天下大乱，内忧外患接踵而至。大明王朝在风雨飘摇中轰然倒塌，成为历史尘埃。"}
+};
+let gameState=null;
+function createInitialState(){return{ruleset_id:RULESET_ID,version:"2.0",year:1,eraIndex:2,season:0,treasury:10000,food:5000,stability:60,prestige:50,military:8000,mandate:70,adminPoints:5,factions:{wen:{satisfaction:60,influence:40},wu:{satisfaction:60,influence:30},zong:{satisfaction:50,influence:20},huan:{satisfaction:50,influence:25},wai:{satisfaction:55,influence:15}},people:JSON.parse(JSON.stringify(PEOPLE)),provinces:JSON.parse(JSON.stringify(PROVINCES)),frontiers:JSON.parse(JSON.stringify(FRONTIERS)),policies:JSON.parse(JSON.stringify(POLICIES)),councilActive:false,currentMemorials:[],currentMemorialIndex:0,log:[],gameOver:false,totalYears:0,ending:null,mapView:"stability",selectedProvince:null,voyages:0,grandCanon:false,capitalBeijing:false};}
+function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function getEraName(){return ERA_NAMES[gameState.eraIndex].name;}
+function getYearString(){if(gameState.year===1)return getEraName()+" 元年";return getEraName()+" "+toChineseNum(gameState.year)+"年";}
+function toChineseNum(n){const d=["零","一","二","三","四","五","六","七","八","九"];if(n<10)return d[n];if(n<20)return "十"+(n%10===0?"":d[n%10]);if(n<100){const t=Math.floor(n/10),o=n%10;return d[t]+"十"+(o===0?"":d[o]);}return String(n);}
+function formatNum(n){if(n>=10000)return (n/10000).toFixed(1)+"万";return n.toLocaleString();}
+function ancientTreasury(v){if(v>=15000)return"国库充盈";if(v>=8000)return"国库尚丰";if(v>=3000)return"国库尚可";if(v>=1000)return"国库渐绌";if(v>0)return"国库空虚";return"国库告罄";}
+function ancientFood(v){if(v>=8000)return"粮草山积";if(v>=4000)return"粮草充足";if(v>=2000)return"粮草尚可";if(v>=500)return"粮草紧张";if(v>0)return"粮草告急";return"粮草告罄";}
+function ancientStability(v){if(v>=80)return"国泰民安";if(v>=60)return"政局稳定";if(v>=40)return"人心浮动";if(v>=20)return"动荡不安";return"天下大乱";}
+function ancientMilitary(v){if(v>=12000)return"兵强马壮";if(v>=8000)return"军力尚可";if(v>=4000)return"军备废弛";if(v>0)return"兵力单薄";return"无兵可用";}
+function ancientMandate(v){if(v>=80)return"天命所归";if(v>=60)return"天命尚存";if(v>=40)return"天命渐微";if(v>=20)return"天命将尽";return"天命已尽";}
+function ancientPrestige(v){if(v>=80)return"万邦来朝";if(v>=60)return"威望素著";if(v>=40)return"威望尚可";if(v>=20)return"威望渐损";return"威望扫地";}
+function addLog(text,type="normal"){const t=getYearString()+"·"+SEASONS[gameState.season];gameState.log.unshift({time:t,text,type});if(gameState.log.length>100)gameState.log.pop();renderLog();}
+function applyEffect(effect){if(!effect)return;if(effect.treasury!==undefined)gameState.treasury=Math.max(0,gameState.treasury+effect.treasury);if(effect.food!==undefined)gameState.food=Math.max(0,gameState.food+effect.food);if(effect.stability!==undefined)gameState.stability=clamp(gameState.stability+effect.stability,0,100);if(effect.prestige!==undefined)gameState.prestige=clamp(gameState.prestige+effect.prestige,0,100);if(effect.military!==undefined)gameState.military=Math.max(0,gameState.military+effect.military);if(effect.mandate!==undefined)gameState.mandate=clamp(gameState.mandate+effect.mandate,0,100);if(effect.adminPoints!==undefined)gameState.adminPoints=Math.max(0,gameState.adminPoints+effect.adminPoints);if(effect.factions){for(const[fid,val]of Object.entries(effect.factions)){if(gameState.factions[fid])gameState.factions[fid].satisfaction=clamp(gameState.factions[fid].satisfaction+val,0,100);}}}
+function effectToText(effect){if(!effect)return"";const p=[];if(effect.treasury)p.push((effect.treasury>0?"+":"")+effect.treasury+"银");if(effect.food)p.push((effect.food>0?"+":"")+effect.food+"粮");if(effect.stability)p.push("稳定"+(effect.stability>0?"+":"")+effect.stability);if(effect.prestige)p.push("威望"+(effect.prestige>0?"+":"")+effect.prestige);if(effect.military)p.push("军力"+(effect.military>0?"+":"")+effect.military);if(effect.mandate)p.push("天命"+(effect.mandate>0?"+":"")+effect.mandate);return p.join("，");}
+function generateMemorials(){const s=gameState.season;let count=(s===3)?randInt(1,2):randInt(2,3);const available=[...MEMORIALS];const selected=[];for(let i=0;i<count&&available.length>0;i++){let w=[...available];if(gameState.stability<40){const d=available.filter(m=>m.type==="灾荒"||m.type==="军事");w=w.concat(d,d);}if(gameState.mandate<40){const sp=available.filter(m=>m.type==="特殊");w=w.concat(sp,sp);}if(gameState.treasury<3000){const ec=available.filter(m=>m.type==="经济");w=w.concat(ec);}const picked=pickRandom(w);selected.push(picked);const idx=available.indexOf(picked);if(idx>-1)available.splice(idx,1);}return selected;}
+function seasonSettlement(){const s=gameState.season;let e={},d="";switch(s){case 0:e={food:200};d="春耕播种，粮草渐丰。粮食+200";break;case 1:e={military:100};d="夏练三军，兵强马壮。军力+100";break;case 2:e={treasury:800,food:400};d="秋收纳税，国库充盈。银+800，粮+400";break;case 3:e={prestige:3,mandate:2};d="冬祭天地，万民归心。威望+3，天命+2";break;}let provBonus={treasury:0,food:0};for(const p of gameState.provinces){const eff=p.stab/100;provBonus.treasury+=Math.floor(p.tax*eff*0.1);provBonus.food+=Math.floor(p.food*eff*0.1);}e.treasury=(e.treasury||0)+provBonus.treasury;e.food=(e.food||0)+provBonus.food;applyEffect(e);addLog(SEASON_ICONS[s]+" "+SEASONS[s]+"季结算："+d+"（各省加成：银+"+provBonus.treasury+"，粮+"+provBonus.food+"）","season");}
+function yearSettlement(){gameState.totalYears++;applyEffect({treasury:500,food:300,adminPoints:3});addLog("📅 年度大结算：国库+500，粮食+300，行政点+3","year");if(Math.random()<0.3){applyEffect({food:500,stability:5});addLog("🌾 今年风调雨顺，大获丰收！粮食+500，稳定+5","good");}gameState.factions.wen.influence=clamp(gameState.factions.wen.influence+1,0,100);gameState.factions.wu.satisfaction=clamp(gameState.factions.wu.satisfaction-1,0,100);gameState.factions.huan.influence=clamp(gameState.factions.huan.influence+1,0,100);for(const p of gameState.people){if(!p.alive)continue;p.age++;if(p.age>70||(p.health<20&&Math.random()<0.3)){p.alive=false;addLog("⚰️ "+p.title+" "+p.name+"卒于任上，享年"+p.age+"岁","event");}else if(p.age>60){p.health=clamp(p.health-randInt(2,5),0,100);}}for(const f of gameState.frontiers){f.drill=clamp(f.drill-randInt(0,2),0,100);f.morale=clamp(f.morale-randInt(0,2),0,100);}if(gameState.season===0&&Math.random()<0.25&&gameState.military<10000){const frontier=pickRandom(gameState.frontiers);const damage=Math.floor(frontier.men*(1-frontier.drill/100)*0.3);frontier.men=Math.max(0,frontier.men-damage);gameState.military=Math.max(0,gameState.military-damage);gameState.stability=clamp(gameState.stability-5,0,100);gameState.prestige=clamp(gameState.prestige-3,0,100);addLog("🔥 鞑靼入寇"+frontier.name+"！边军损失"+damage+"人，稳定-5，威望-3","event");}checkFactionThresholds();checkEnding();checkGameOver();}
+function checkFactionThresholds(){const f=gameState.factions;const triggered=[];if(f.wu.satisfaction<20&&Math.random()<0.4){triggerThresholdEvent("wu_low",false);f.wu.satisfaction=clamp(f.wu.satisfaction+10,0,100);triggered.push("wu_low");}if(f.zong.satisfaction<20&&Math.random()<0.3){triggerThresholdEvent("zong_low",false);f.zong.satisfaction=clamp(f.zong.satisfaction+10,0,100);triggered.push("zong_low");}if(f.huan.influence>80&&Math.random()<0.35){triggerThresholdEvent("huan_high",false);f.huan.influence=clamp(f.huan.influence-10,0,100);triggered.push("huan_high");}if(f.wai.influence>80&&Math.random()<0.3){triggerThresholdEvent("wai_high",false);f.wai.influence=clamp(f.wai.influence-10,0,100);triggered.push("wai_high");}if(f.wen.influence>80&&Math.random()<0.25){triggerThresholdEvent("wen_high",false);f.wen.influence=clamp(f.wen.influence-10,0,100);triggered.push("wen_high");}if(triggered.length>0){const ts=triggered.map(k=>THRESHOLD_EVENTS[k].title);const cs=triggered.map(k=>THRESHOLD_EVENTS[k].content);showAlert("年度变故："+ts.join("、"),cs.join("\n\n"));}for(const[fid,data]of Object.entries(f)){if(data.satisfaction<20){const fn=FACTION_CONFIG.find(c=>c.id===fid).name;addLog("⚠️ "+fn+"满意度过低（"+data.satisfaction+"），恐生变故！","warning");}if(data.influence>70){const fn=FACTION_CONFIG.find(c=>c.id===fid).name;addLog("⚠️ "+fn+"影响力过高（"+data.influence+"），尾大不掉！","warning");}}}
+function triggerThresholdEvent(key,show=true){const evt=THRESHOLD_EVENTS[key];applyEffect(evt.effect);addLog("🔥 "+evt.title+"："+evt.content,"event");if(show)showAlert(evt.title,evt.content+"\n\n"+effectToText(evt.effect));}
+function checkGameOver(){if(gameState.mandate<=0){gameState.gameOver=true;gameState.ending="fall";addLog("💀 天命已尽，大明灭亡！","event");showEnding();}else if(gameState.stability<=0){gameState.gameOver=true;gameState.ending="fall";addLog("💀 天下大乱，国家覆灭！","event");showEnding();}}
+function checkEnding(){if(gameState.gameOver)return;if(gameState.totalYears>=10&&gameState.stability>=80&&gameState.prestige>=80&&gameState.mandate>=80){gameState.gameOver=true;gameState.ending="yongle_heyday";showEnding();return;}if(gameState.factions.huan.influence>=95){gameState.gameOver=true;gameState.ending="eunuch_dictatorship";showEnding();return;}if(gameState.factions.wen.influence>=95){gameState.gameOver=true;gameState.ending="civil_dominance";showEnding();return;}if(gameState.factions.zong.satisfaction<=10&&gameState.military<6000){gameState.gameOver=true;gameState.ending="jingnan_2";showEnding();return;}if(gameState.totalYears>=15&&gameState.military<5000&&gameState.prestige<40){gameState.gameOver=true;gameState.ending="tumu_crisis";showEnding();return;}}
+function showEnding(){const e=ENDINGS[gameState.ending]||ENDINGS.fall;document.getElementById("endingIcon").textContent=e.icon;document.getElementById("endingTitle").textContent=e.title;document.getElementById("endingDesc").textContent=e.desc;document.getElementById("endingStats").innerHTML='<div class="ov-card"><div class="ov-label">在位</div><div class="ov-value">'+gameState.totalYears+'</div><div class="ov-desc">年</div></div><div class="ov-card"><div class="ov-label">最终稳定</div><div class="ov-value">'+gameState.stability+'</div><div class="ov-desc">'+ancientStability(gameState.stability)+'</div></div><div class="ov-card"><div class="ov-label">最终天命</div><div class="ov-value">'+gameState.mandate+'</div><div class="ov-desc">'+ancientMandate(gameState.mandate)+'</div></div>';document.getElementById("endingModal").classList.remove("hide");}
+function advanceSeason(){if(gameState.gameOver)return;gameState.season++;if(gameState.season>=4){gameState.season=0;gameState.year++;if(gameState.year>22&&gameState.eraIndex<ERA_NAMES.length-1){gameState.eraIndex++;gameState.year=1;addLog("📜 改元"+getEraName()+"！","year");}yearSettlement();}gameState.councilActive=false;renderAll();}
+function unlockPolicy(id){const p=gameState.policies.find(x=>x.id===id);if(!p||p.unlocked)return;for(const req of p.req){const r=gameState.policies.find(x=>x.id===req);if(!r||!r.unlocked){showAlert("旨意未达","需先解锁前置国策："+r.name);return;}}if(gameState.adminPoints<p.cost){showAlert("行政点不足","需要"+p.cost+"行政点，当前仅有"+gameState.adminPoints+"点");return;}gameState.adminPoints-=p.cost;p.unlocked=true;applyEffect(p.effect);addLog("📖 国策颁行：「"+p.name+"」——"+p.desc+"（"+effectToText(p.effect)+"）","good");renderAll();showAlert("国策颁行","「"+p.name+"」已颁行天下！\n\n"+p.desc+"\n\n效果："+effectToText(p.effect));}
+function renderAll(){renderTopBar();renderCouncil();renderFactions();renderOverview();renderLog();renderPeople();renderPolicy();renderMap();}
+function renderTopBar(){document.getElementById("topYear").textContent=getYearString();document.getElementById("topSeason").textContent=SEASON_ICONS[gameState.season]+" "+SEASONS[gameState.season];const stats=[{label:"国库",value:ancientTreasury(gameState.treasury),raw:formatNum(gameState.treasury)+"两",cls:gameState.treasury<2000?"danger":""},{label:"粮草",value:ancientFood(gameState.food),raw:formatNum(gameState.food)+"石",cls:gameState.food<1000?"danger":""},{label:"稳定",value:ancientStability(gameState.stability),raw:gameState.stability,cls:gameState.stability<30?"danger":gameState.stability>70?"good":""},{label:"威望",value:ancientPrestige(gameState.prestige),raw:gameState.prestige,cls:gameState.prestige<30?"warn":""},{label:"军力",value:ancientMilitary(gameState.military),raw:formatNum(gameState.military),cls:""},{label:"天命",value:ancientMandate(gameState.mandate),raw:gameState.mandate,cls:gameState.mandate<30?"danger":gameState.mandate>70?"good":""}];document.getElementById("topStats").innerHTML=stats.map(s=>'<div class="stat-box '+s.cls+'" title="'+s.raw+'"><l>'+s.label+'</l><s>'+s.value+'</s></div>').join("");}
+function renderCouncil(){const sub=document.getElementById("councilSub");const titleEl=document.getElementById("councilTitle");const descEl=document.getElementById("councilDesc");const statusEl=document.getElementById("councilStatus");const btn=document.getElementById("btnStartCouncil");const iconEl=document.querySelector("#councilInfo .big-icon");if(gameState.gameOver){sub.textContent="游戏已终";iconEl.textContent="📜";titleEl.textContent="江山已定";descEl.innerHTML="本局已终，陛下可查看起居注，或重启新局。";statusEl.innerHTML="";btn.textContent="🔄 再开一局";btn.className="primary gold";btn.style.display="";return;}btn.className="primary gold";if(gameState.councilActive){sub.textContent="朝议中";iconEl.textContent="📜";titleEl.textContent="朝议进行中";descEl.textContent="正在批复奏折，请在弹窗中做出决策。";statusEl.innerHTML="";btn.style.display="none";}else{sub.textContent="候旨";iconEl.textContent="🏛️";titleEl.textContent="开启"+SEASONS[gameState.season]+"季朝议";descEl.innerHTML="百官已集于奉天殿外，陛下可临朝听政。<br>本季必有若干奏折亟待批复。";statusEl.innerHTML='<div class="cs-item"><l>当前季节</l><s>'+SEASON_ICONS[gameState.season]+' '+SEASONS[gameState.season]+'</s></div><div class="cs-item"><l>国库</l><s>'+ancientTreasury(gameState.treasury)+'</s></div><div class="cs-item"><l>粮草</l><s>'+ancientFood(gameState.food)+'</s></div><div class="cs-item"><l>稳定</l><s>'+ancientStability(gameState.stability)+'</s></div><div class="cs-item"><l>行政点</l><s>'+gameState.adminPoints+'</s></div>';btn.style.display="";btn.textContent="⚡ 临朝听政";}}
+function renderFactions(){const c=document.getElementById("factionList");c.innerHTML=FACTION_CONFIG.map(f=>{const d=gameState.factions[f.id];const sc=d.satisfaction<30?"low":"",ic=d.influence>70?"high":"";const cc=d.satisfaction<20?"danger":d.satisfaction<30||d.influence>70?"warning":"";return '<div class="faction-card '+cc+'"><div class="faction-header"><span class="faction-name">'+f.icon+' '+f.name+'</span><span class="small-text">'+f.desc+'</span></div><div class="faction-bars"><div class="bar-row"><span class="bar-label">满意度</span><div class="bar-track"><div class="bar-fill sat '+sc+'" style="width:'+d.satisfaction+'%"></div></div><span class="bar-value '+(d.satisfaction<30?"red-text":"")+'">'+d.satisfaction+'</span></div><div class="bar-row"><span class="bar-label">影响力</span><div class="bar-track"><div class="bar-fill inf '+ic+'" style="width:'+d.influence+'%"></div></div><span class="bar-value '+(d.influence>70?"red-text":"")+'">'+d.influence+'</span></div></div></div>';}).join("");}
+function renderOverview(){document.getElementById("overviewSub").textContent=getYearString()+" · "+SEASONS[gameState.season];const alivePeople=gameState.people.filter(p=>p.alive).length;const totalPop=gameState.provinces.reduce((s,p)=>s+p.pop,0);const cards=[{label:"国库",value:ancientTreasury(gameState.treasury),desc:formatNum(gameState.treasury)+"两"},{label:"粮草",value:ancientFood(gameState.food),desc:formatNum(gameState.food)+"石"},{label:"稳定",value:ancientStability(gameState.stability),desc:gameState.stability+"/100"},{label:"威望",value:ancientPrestige(gameState.prestige),desc:gameState.prestige+"/100"},{label:"军力",value:ancientMilitary(gameState.military),desc:formatNum(gameState.military)},{label:"天命",value:ancientMandate(gameState.mandate),desc:gameState.mandate+"/100"},{label:"在朝官员",value:alivePeople+"人",desc:"内阁六部九卿"},{label:"天下人口",value:formatNum(totalPop*10000),desc:"两京十三省"},{label:"行政点",value:gameState.adminPoints,desc:"用于颁行国策"},{label:"在位",value:gameState.totalYears+"年",desc:getEraName()+"年间"},{label:"下西洋",value:gameState.voyages+"次",desc:"郑和远航"},{label:"国都",value:gameState.capitalBeijing?"北京":"南京",desc:"天子守国门"}];document.getElementById("overviewGrid").innerHTML=cards.map(c=>'<div class="ov-card"><div class="ov-label">'+c.label+'</div><div class="ov-value">'+c.value+'</div><div class="ov-desc">'+c.desc+'</div></div>').join("");}
+function renderLog(){const p=document.getElementById("logPanel");document.getElementById("logCount").textContent="共 "+gameState.log.length+" 条";p.innerHTML=gameState.log.map(e=>'<div class="log-entry '+e.type+'"><span class="log-time">'+e.time+'</span>'+e.text+'</div>').join("");}
+function renderPeople(){const alive=gameState.people.filter(p=>p.alive);const dead=gameState.people.filter(p=>!p.alive);document.getElementById("peopleSub").textContent="在朝 "+alive.length+" 人 / 已故 "+dead.length+" 人";document.getElementById("peopleList").innerHTML=alive.map(p=>{const factionName=FACTION_CONFIG.find(f=>f.id===p.faction)?.name||"";const healthColor=p.health>60?"green-text":p.health>30?"gold-text":"red-text";return '<div class="person-card"><div class="person-avatar">'+(p.faction==="huan"?"🏮":p.faction==="wu"?"⚔️":p.faction==="wai"?"💎":p.faction==="zong"?"👑":"📖")+'</div><div class="person-info"><div class="person-name">'+p.name+' <span class="small-text">('+p.age+'岁)</span></div><div class="person-title">'+p.title+' · '+factionName+'</div><div class="person-stats"><span class="person-stat">政<b>'+p.politics+'</b></span><span class="person-stat">军<b>'+p.military+'</b></span><span class="person-stat">智<b>'+p.wisdom+'</b></span><span class="person-stat">魅<b>'+p.charm+'</b></span><span class="person-stat">忠<b>'+p.loyalty+'</b></span><span class="person-stat '+healthColor+'">健<b>'+p.health+'</b></span></div></div></div>';}).join("");}
+function renderPolicy(){document.getElementById("policySub").textContent="行政点: "+gameState.adminPoints;document.getElementById("policyTree").innerHTML=gameState.policies.map(p=>{const reqMet=p.req.every(r=>gameState.policies.find(x=>x.id===r)?.unlocked);const canAfford=gameState.adminPoints>=p.cost;const cls=p.unlocked?"unlocked":(!reqMet||!canAfford)?"locked":"";const oc=p.unlocked?'':'onclick="unlockPolicy(\''+p.id+'\')"';return '<div class="policy-node '+cls+'" '+oc+'><div class="pn-name">'+(p.unlocked?"✅ ":"")+p.name+'</div><div class="pn-desc">'+p.desc+'</div><div class="pn-cost">耗费 '+p.cost+' 行政点'+(p.req.length>0?' · 需前置':'')+'</div></div>';}).join("");}
+function renderMap(){const canvas=document.getElementById("mapCanvas");if(!canvas)return;const ctx=canvas.getContext("2d");const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#0a0604";ctx.fillRect(0,0,w,h);ctx.fillStyle="#0d1520";ctx.fillRect(0,0,w,h*0.3);ctx.fillRect(w*0.7,0,w*0.3,h);const view=gameState.mapView;for(const p of gameState.provinces){const value=p[view==="stability"?"stab":view];const maxVal=view==="population"?1200:view==="tax"?200:view==="food"?180:view==="military"?150:100;const ratio=clamp(value/maxVal,0,1);let r,g,b;if(view==="stability"){if(ratio<0.3){r=160;g=40;b=40;}else if(ratio<0.6){r=180;g=140;b=40;}else{r=60;g=140;b=60;}}else{if(ratio<0.5){r=180;g=Math.floor(60+ratio*180);b=40;}else{r=Math.floor(180-(ratio-0.5)*160);g=150;b=40;}}ctx.fillStyle="rgb("+r+","+g+","+b+")";ctx.strokeStyle="#5a4220";ctx.lineWidth=1;const px=p.x,py=p.y,pr=28;ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#f0e0a0";ctx.font="bold 11px KaiTi,SimSun,serif";ctx.textAlign="center";ctx.fillText(p.name,px,py+4);if(p.capital){ctx.fillStyle="#e8c860";ctx.font="14px serif";ctx.fillText("★",px,py-pr-4);}if(gameState.selectedProvince===p.id){ctx.strokeStyle="#e8c860";ctx.lineWidth=3;ctx.beginPath();ctx.arc(px,py,pr+4,0,Math.PI*2);ctx.stroke();}}for(const f of gameState.frontiers){ctx.fillStyle=f.men>200?"#c44":"#866";ctx.beginPath();ctx.arc(f.x,f.y,8,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f88";ctx.font="9px serif";ctx.textAlign="center";ctx.fillText(f.name,f.x,f.y+3);}const legendNames={stability:"稳定",population:"人口",tax:"税赋",food:"粮产",military:"驻军"};document.getElementById("mapSub").textContent="视图："+legendNames[view]+" · 点击省份查看详情";document.getElementById("mapLegend").innerHTML='<span><span class="dot" style="background:#a02828"></span>低</span><span><span class="dot" style="background:#b48c28"></span>中</span><span><span class="dot" style="background:#3c8c3c"></span>高</span><span><span class="dot" style="background:#c44"></span>九边军镇</span><span>★ 京城</span>';if(gameState.selectedProvince){const p=gameState.provinces.find(x=>x.id===gameState.selectedProvince);if(p){const pd=document.getElementById("provinceDetail");pd.classList.remove("hide");pd.innerHTML='<h4>'+p.name+(p.capital?" ★京城":"")+'</h4><div class="pd-grid"><div class="pd-item"><l>人口</l><s>'+formatNum(p.pop*10000)+'</s></div><div class="pd-item"><l>年税</l><s>'+p.tax+'万两</s></div><div class="pd-item"><l>粮产</l><s>'+p.food+'万石</s></div><div class="pd-item"><l>驻军</l><s>'+p.mil+'千人</s></div><div class="pd-item"><l>稳定</l><s>'+p.stab+'/100</s></div><div class="pd-item"><l>状态</l><s>'+(p.stab>=70?"安定":p.stab>=40?"一般":"动荡")+'</s></div></div>';}}else{document.getElementById("provinceDetail").classList.add("hide");}}
+function initMapCanvas(){const canvas=document.getElementById("mapCanvas");if(!canvas)return;canvas.addEventListener("click",(e)=>{const rect=canvas.getBoundingClientRect();const scaleX=canvas.width/rect.width,scaleY=canvas.height/rect.height;const x=(e.clientX-rect.left)*scaleX,y=(e.clientY-rect.top)*scaleY;for(const p of gameState.provinces){const dx=x-p.x,dy=y-p.y;if(dx*dx+dy*dy<32*32){gameState.selectedProvince=p.id;renderMap();return;}}gameState.selectedProvince=null;renderMap();});}
+function initMapTabs(){document.querySelectorAll(".view-tab").forEach(t=>{t.addEventListener("click",()=>{document.querySelectorAll(".view-tab").forEach(x=>x.classList.remove("act"));t.classList.add("act");gameState.mapView=t.dataset.view;renderMap();});});}
+function showMemorial(index){const m=gameState.currentMemorials[index];if(!m)return;document.getElementById("memorialProgress").textContent="奏折 "+(index+1)+" / "+gameState.currentMemorials.length;const te=document.getElementById("memorialType");te.textContent=m.type;te.style.background=m.typeColor+"22";te.style.color=m.typeColor;te.style.borderColor=m.typeColor;document.getElementById("memorialTitle").textContent=m.title;document.getElementById("memorialContent").innerHTML='<div style="color:#9a8060;font-size:12px;margin-bottom:8px">【'+m.recommender+' 奏】</div>'+m.content+'<div class="mem-advisor">'+m.advisor+'</div>';const oe=document.getElementById("memorialOptions");oe.innerHTML=m.options.map((opt,i)=>'<button class="option-btn" onclick="selectOption('+i+')"><div class="opt-title">'+(i+1)+'. '+opt.text+'</div><div class="opt-effect">'+(opt.desc||effectToText(opt.effect))+'</div></button>').join("");document.getElementById("memorialModal").classList.remove("hide");}
+function selectOption(optIndex){const m=gameState.currentMemorials[gameState.currentMemorialIndex];const opt=m.options[optIndex];applyEffect(opt.effect);if(m.id==="zhenhe_voyage"&&optIndex===0){gameState.voyages++;}if(m.id==="xiejin_encyclopedia"&&optIndex===0){gameState.grandCanon=true;}if(m.id==="capital_move_plan"&&optIndex===0){gameState.capitalBeijing=true;}addLog("📜 【"+m.title+"】"+m.recommender+"奏，陛下 chose："+opt.text+"（"+(opt.desc||effectToText(opt.effect))+"）","normal");document.getElementById("memorialModal").classList.add("hide");checkGameOver();if(gameState.gameOver){renderAll();return;}gameState.currentMemorialIndex++;if(gameState.currentMemorialIndex<gameState.currentMemorials.length){setTimeout(()=>showMemorial(gameState.currentMemorialIndex),300);}else{finishCouncil();}renderTopBar();}
+function finishCouncil(){gameState.councilActive=false;seasonSettlement();advanceSeason();if(!gameState.gameOver){showAlert("朝议已毕",SEASONS[(gameState.season+3)%4]+"季朝议已毕，季节结算完成。\n\n今为"+getYearString()+"·"+SEASONS[gameState.season]+"季，陛下可歇息片刻。");}}
+function showAlert(title,content){document.getElementById("alertTitle").textContent=title;document.getElementById("alertContent").textContent=content;document.getElementById("alertModal").classList.remove("hide");}
+document.getElementById("alertConfirm").addEventListener("click",()=>{document.getElementById("alertModal").classList.add("hide");});
+function saveGame(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(gameState));addLog("💾 已存档","good");showAlert("存档","陛下，起居注已存档。");}catch(e){showAlert("存档失败",e.message);}}
+function loadGame(){try{const d=localStorage.getItem(SAVE_KEY);if(!d){showAlert("无存档","未找到存档。");return;}gameState=JSON.parse(d);if(gameState.ruleset_id!==RULESET_ID){showAlert("版本不合","存档版本不合。");return;}renderAll();addLog("📂 已读档","good");showAlert("读档","陛下，已读取旧档。");}catch(e){showAlert("读档失败",e.message);}}
+function resetGame(){if(!confirm("陛下确定要重启新局吗？当前进度将丢失。"))return;document.getElementById("endingModal").classList.add("hide");gameState=createInitialState();addLog("🎮 新局开启，永乐元年春","year");addLog("📜 永乐元年，春。陛下初登大宝，百废待兴，当励精图治。","normal");renderAll();showAlert("新局开启","《大明国策·永乐风云》\n\n永乐元年，春。\n陛下初登大宝，内有党争，外有边患，当励精图治，开创盛世！");}
+function exportSave(){const d=JSON.stringify(gameState,null,2);const blob=new Blob([d],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="大明国策_存档_"+getYearString()+".json";a.click();URL.revokeObjectURL(url);addLog("📤 已导出存档","good");}
+document.querySelectorAll(".navBtn").forEach(btn=>{btn.addEventListener("click",()=>{document.querySelectorAll(".navBtn").forEach(b=>b.classList.remove("act"));btn.classList.add("act");const p=btn.dataset.panel;document.querySelectorAll(".panel-content").forEach(x=>x.classList.add("hide"));document.getElementById("panel-"+p).classList.remove("hide");});});
+document.getElementById("btnStartCouncil").addEventListener("click",()=>{if(gameState.gameOver){resetGame();return;}if(gameState.councilActive)return;gameState.councilActive=true;gameState.currentMemorials=generateMemorials();gameState.currentMemorialIndex=0;addLog("🏛️ "+SEASONS[gameState.season]+"季朝议开启，共"+gameState.currentMemorials.length+"份奏折","season");renderCouncil();setTimeout(()=>showMemorial(0),300);});
+document.getElementById("btnSave").addEventListener("click",saveGame);document.getElementById("btnLoad").addEventListener("click",loadGame);document.getElementById("btnReset").addEventListener("click",resetGame);document.getElementById("btnExport").addEventListener("click",exportSave);
+document.getElementById("alertModal").addEventListener("click",(e)=>{if(e.target.id==="alertModal")document.getElementById("alertModal").classList.add("hide");});
+function init(){const saved=localStorage.getItem(SAVE_KEY);if(saved){try{const d=JSON.parse(saved);if(d.ruleset_id===RULESET_ID){gameState=d;addLog("📂 检测到旧档，已自动读取","normal");renderAll();initMapCanvas();initMapTabs();return;}}catch(e){}}gameState=createInitialState();addLog("🎮 大明国策·永乐风云 开启","year");addLog("📜 永乐元年，春。陛下初登大宝，内有党争，外有边患，当励精图治。","normal");renderAll();initMapCanvas();initMapTabs();setTimeout(()=>{showAlert("大明国策·永乐风云","欢迎陛下！\n\n您将扮演永乐大帝，在文官、武将、宗室、宦官、外戚五大势力的明争暗斗中维持皇权平衡。\n\n两京十三省待您治理，满朝文武各怀心思，鞑靼瓦剌虎视眈眈。\n\n点击「临朝听政」，开始您的帝王之路！");},500);}
+init();
+</script>
+</body>
+</html>

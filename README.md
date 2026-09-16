@@ -74,6 +74,21 @@ tianming/
 - 📢 站务公告 — 官方通知
 - 📌 精选好帖 — 管理员置顶加精
 
+## 仓库结构与版本说明
+
+为保证线上链接稳定，文件名与目录保持不变；各入口与目录用途如下：
+
+| 路径 | 用途 |
+|------|------|
+| `index.html` | 线上 GitHub Pages 首页（《大明国策 · 永乐风云》，自包含单文件） |
+| `mandate_of_heaven.html` | 《天命·国策 — 大明王朝》早期独立版本（自包含单文件，保留以便旧链接访问） |
+| `tianming/` | Node + SQLite 全栈应用（`server.js` 服务端、`public/` 前端、Docker / Railway / Render / 阿里云部署配置） |
+| `tianming-oss-static/` | 全栈版的纯静态（OSS/CDN）版本，含 `oss-standalone.js` |
+
+说明：
+- 运行时自动生成的 `data.db`、`uploads/` 下的图片不再纳入版本管理（已加入 `.gitignore`），部署时由应用/Docker 自动创建。
+- 历史构建包 `*.tar.gz` 与编辑器缓存 `.trae-html-share-packages/` 已从仓库移除；如需找回见备份分支 `backup/pre-cleanup-20260916`。
+
 ## License
 
 MIT

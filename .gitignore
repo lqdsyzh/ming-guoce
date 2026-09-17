@@ -1,0 +1,21 @@
+# 依赖
+node_modules/
+
+# 运行时数据 / 上传（由应用自动生成，勿入库）
+*.db
+*.db-journal
+uploads/*
+!uploads/.gitkeep
+
+# 日志
+*.log
+
+# 构建/打包产物
+*.tar.gz
+*.zip
+
+# 编辑器缓存
+.trae-html-share-packages/
+
+# 系统
+.DS_Store
